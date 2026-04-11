@@ -1,6 +1,6 @@
-import type { Prisma } from "../../../generated/prisma/client.js";
-import { prisma } from "../../lib/prisma.js";
-import type { UsersRepository } from "../users-repository.ts";
+import type { Prisma } from "@generated/prisma/client";
+import type { UsersRepository } from "@repositories/users-repository";
+import { prisma } from "@/lib/prisma";
 
 export class PrismaUsersRepository implements UsersRepository {
 	async findById(id: string) {

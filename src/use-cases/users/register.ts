@@ -1,8 +1,8 @@
+import type { Role, User } from "@generated/prisma/client";
+import type { UsersRepository } from "@repositories/users-repository";
+import { UserAlreadyExistsError } from "@usecases/users/errors/user-already-exists-error";
+import { type Either, left, right } from "@utils/either";
 import { hash } from "argon2";
-import type { Role, User } from "../../../generated/prisma/client";
-import type { UsersRepository } from "../../repositories/users-repository";
-import { type Either, left, right } from "../../utils/either";
-import { UserAlreadyExistsError } from "./errors/user-already-exists-error";
 
 interface RegisterUserUseCaseRequest {
 	email: string;

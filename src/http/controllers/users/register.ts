@@ -1,9 +1,9 @@
+import { Role } from "@generated/prisma/enums";
+import { UserAlreadyExistsError } from "@usecases/users/errors/user-already-exists-error";
+import { makeRegisterUseCase } from "@usecases/users/factories/make-register-user-use-case";
+import { HTTP_STATUS } from "@utils/constants";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { Role } from "../../../../generated/prisma/enums";
-import { UserAlreadyExistsError } from "../../../use-cases/users/errors/user-already-exists-error";
-import { makeRegisterUseCase } from "../../../use-cases/users/factories/make-register-user-use-case";
-import { HTTP_STATUS } from "../../../utils/constants";
 
 export const RegisterUserController: FastifyPluginAsyncZod = async (app) => {
 	app.post(

@@ -1,6 +1,8 @@
+import { usersRoutes } from "@controllers/users/routes";
 import { fastifyCors } from "@fastify/cors";
 import { fastifySwagger } from "@fastify/swagger";
 import ScalarApiReference from "@scalar/fastify-api-reference";
+import { HTTP_STATUS } from "@utils/constants";
 import { fastify } from "fastify";
 import {
 	hasZodFastifySchemaValidationErrors,
@@ -10,9 +12,7 @@ import {
 	type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import z, { ZodError } from "zod";
-import { env } from "./env";
-import { usersRoutes } from "./http/controllers/users/routes";
-import { HTTP_STATUS } from "./utils/constants";
+import { env } from "@/env";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
