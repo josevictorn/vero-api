@@ -1,5 +1,6 @@
 import { usersRoutes } from "@controllers/users/routes";
 import { fastifyCors } from "@fastify/cors";
+import { fastifyJwt } from "@fastify/jwt";
 import { fastifySwagger } from "@fastify/swagger";
 import ScalarApiReference from "@scalar/fastify-api-reference";
 import { HTTP_STATUS } from "@utils/constants";
@@ -19,6 +20,13 @@ const app = fastify().withTypeProvider<ZodTypeProvider>();
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
+app.register(fastifyJwt, {
+	secret: env.JWT_SECRET,
+	sign: {
+		expiresIn: "10m",
+	},
+});
+
 app.register(fastifyCors, {
 	origin: true,
 	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -32,6 +40,20 @@ app.register(fastifySwagger, {
 			title: "Vero API",
 			version: "1.0.0",
 		},
+		components: {
+			securitySchemes: {
+				bearerAuth: {
+					type: "http",
+					scheme: "bearer",
+					bearerFormat: "JWT",
+				},
+			},
+		},
+		security: [
+			{
+				bearerAuth: [],
+			},
+		],
 	},
 	transform: jsonSchemaTransform,
 });
