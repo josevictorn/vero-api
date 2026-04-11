@@ -2,48 +2,43 @@ import { Role } from "@generated/prisma/client";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { InvalidPageError } from "@/use-cases/users/errors/invalid-page-error";
-import { makeFetchUsersUseCase } from "@/use-cases/users/factories/make-fetch-users-use-case";
+import { UserNotFoundError } from "@/use-cases/users/errors/user-not-found-error";
+import { makeGetUserProfileUseCase } from "@/use-cases/users/factories/make-get-user-profile-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
 
-export const FetchUsersController: FastifyPluginAsyncZod = async (app) => {
+export const GetUsersController: FastifyPluginAsyncZod = async (app) => {
 	app.get(
-		"/users",
+		"/users/:id",
 		{
 			onRequest: [verifyJWT],
 			schema: {
 				tags: ["users"],
-				summary: "Fetch paginated list of users",
-				querystring: z.object({
-					page: z.coerce
-						.number()
-						.int()
-						.positive()
-						.default(1)
-						.describe("Page number"),
+				summary: "Fetch a user by ID",
+				params: z.object({
+					id: z.uuid(),
 				}),
 				response: {
-					200: z.object({
-						results: z.array(
-							z.object({
+					200: z
+						.object({
+							user: z.object({
 								id: z.uuid(),
 								name: z.string(),
 								email: z.email(),
 								role: z.enum(Role),
 								created_at: z.date(),
-							})
-						),
-						meta: z.object({
-							currentPage: z.number().int().positive(),
-							totalCount: z.number().int().nonnegative(),
-							perPage: z.number().int().positive(),
-						}),
-					}),
+							}),
+						})
+						.describe("User details"),
 					400: z
 						.object({
 							message: z.string(),
 						})
 						.describe("Invalid request."),
+					404: z
+						.object({
+							message: z.string(),
+						})
+						.describe("User not found"),
 					500: z
 						.object({
 							message: z.string(),
@@ -53,18 +48,18 @@ export const FetchUsersController: FastifyPluginAsyncZod = async (app) => {
 			},
 		},
 		async (request, reply) => {
-			const { page } = request.query;
+			const { id } = request.params;
 
-			const fetchUsers = await makeFetchUsersUseCase();
+			const getUserUseCase = makeGetUserProfileUseCase();
 
-			const result = await fetchUsers.execute({ page });
+			const result = await getUserUseCase.execute({ userId: id });
 
 			if (result.isLeft()) {
 				const error = result.value;
 
 				switch (error.constructor) {
-					case InvalidPageError:
-						return reply.status(HTTP_STATUS.BAD_REQUEST).send({
+					case UserNotFoundError:
+						return reply.status(HTTP_STATUS.NOT_FOUND).send({
 							message: error.message,
 						});
 					default:
@@ -74,17 +69,16 @@ export const FetchUsersController: FastifyPluginAsyncZod = async (app) => {
 				}
 			}
 
-			const { results, meta } = result.value;
+			const { user } = result.value;
 
 			return reply.status(HTTP_STATUS.OK).send({
-				results: results.map((user) => ({
+				user: {
 					id: user.id,
 					name: user.name,
 					email: user.email,
 					role: user.role,
 					created_at: user.createdAt,
-				})),
-				meta,
+				},
 			});
 		}
 	);
