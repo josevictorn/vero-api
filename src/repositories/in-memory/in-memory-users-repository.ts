@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { type Prisma, Role, type User } from "@generated/prisma/client";
 import type { UsersRepository } from "@/repositories/users-repository";
+import { ITEM_PER_PAGE } from "@/utils/constants";
+import type { PaginationParams } from "@/utils/pagination-params";
 
 export class InMemoryUsersRepository implements UsersRepository {
 	private readonly items: User[] = [];
@@ -39,5 +41,17 @@ export class InMemoryUsersRepository implements UsersRepository {
 		this.items.push(user);
 
 		return user;
+	}
+
+	async findMany(params: PaginationParams) {
+		const users = this.items.slice(
+			(params.page - 1) * ITEM_PER_PAGE,
+			params.page * ITEM_PER_PAGE
+		);
+
+		return {
+			items: users,
+			total: this.items.length,
+		};
 	}
 }
