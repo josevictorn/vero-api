@@ -1,4 +1,4 @@
-import type { Prisma } from "@generated/prisma/client";
+import type { Prisma, User } from "@generated/prisma/client";
 import type { UsersRepository } from "@repositories/users-repository";
 import { prisma } from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/utils/constants";
@@ -42,5 +42,14 @@ export class PrismaUsersRepository implements UsersRepository {
 			items: users,
 			total,
 		};
+	}
+
+	async save(data: User) {
+		const updatedUser = await prisma.user.update({
+			where: { id: data.id },
+			data,
+		});
+
+		return updatedUser;
 	}
 }
