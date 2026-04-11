@@ -1,6 +1,7 @@
 import { hash } from "argon2";
 import type { Role, User } from "../../../generated/prisma/client";
 import type { UsersRepository } from "../../repositories/users-repository";
+import { type Either, left, right } from "../../utils/either";
 import { UserAlreadyExistsError } from "./errors/user-already-exists-error";
 
 interface RegisterUserUseCaseRequest {
@@ -10,9 +11,10 @@ interface RegisterUserUseCaseRequest {
 	role?: Role;
 }
 
-interface RegisterUserUseCaseResponse {
-	user: User;
-}
+type RegisterUserUseCaseResponse = Either<
+	UserAlreadyExistsError,
+	{ user: User }
+>;
 
 export class RegisterUserUseCase {
 	constructor(private readonly usersRepository: UsersRepository) {}
@@ -21,23 +23,25 @@ export class RegisterUserUseCase {
 		name,
 		email,
 		password,
+		role,
 	}: RegisterUserUseCaseRequest): Promise<RegisterUserUseCaseResponse> {
 		const password_hash = await hash(password);
 
 		const userWithSameEmail = await this.usersRepository.findByEmail(email);
 
 		if (userWithSameEmail) {
-			throw new UserAlreadyExistsError();
+			return left(new UserAlreadyExistsError());
 		}
 
 		const user = await this.usersRepository.create({
 			name,
 			email,
 			password_hash,
+			role,
 		});
 
-		return {
+		return right({
 			user,
-		};
+		});
 	}
 }
