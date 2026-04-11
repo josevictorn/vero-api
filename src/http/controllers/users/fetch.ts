@@ -1,6 +1,7 @@
 import { Role } from "@generated/prisma/client";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
+import { verifyJWT } from "@/http/middlewares/verify-jwt";
 import { InvalidPageError } from "@/use-cases/users/errors/invalid-page-error";
 import { makeFetchUsersUseCase } from "@/use-cases/users/factories/make-fetch-users-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
@@ -9,6 +10,7 @@ export const FetchUsersController: FastifyPluginAsyncZod = async (app) => {
 	app.get(
 		"/users",
 		{
+			onRequest: [verifyJWT],
 			schema: {
 				tags: ["users"],
 				summary: "Fetch paginated list of users",
