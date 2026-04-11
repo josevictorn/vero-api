@@ -17,10 +17,15 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "bundler"
-  },
-
-  "paths": {
-    "@/*": ["./src/*"]
+    "moduleResolution": "bundler",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@generated/*": ["../generated/*"],
+      "@controllers/*": ["http/controllers/*"],
+      "@utils/*": ["utils/*"],
+      "@usecases/*": ["use-cases/*"],
+      "@repositories/*": ["repositories/*"]
+    }
   }
 }

@@ -1,6 +1,8 @@
+import { usersRoutes } from "@controllers/users/routes";
 import { fastifyCors } from "@fastify/cors";
 import { fastifySwagger } from "@fastify/swagger";
 import ScalarApiReference from "@scalar/fastify-api-reference";
+import { HTTP_STATUS } from "@utils/constants";
 import { fastify } from "fastify";
 import {
 	hasZodFastifySchemaValidationErrors,
@@ -10,8 +12,7 @@ import {
 	type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import z, { ZodError } from "zod";
-import { env } from "./env";
-import { HTTP_STATUS } from "./utils/constants";
+import { env } from "@/env";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
@@ -21,6 +22,8 @@ app.setSerializerCompiler(serializerCompiler);
 app.register(fastifyCors, {
 	origin: true,
 	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	credentials: true,
 });
 
 app.register(fastifySwagger, {
@@ -37,11 +40,15 @@ app.register(ScalarApiReference, {
 	routePrefix: "/docs",
 });
 
+app.register(usersRoutes);
+
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {
 		return reply.status(HTTP_STATUS.BAD_REQUEST).send({
 			message: "Validation error.",
-			issues: error.validation,
+			issues: error.validation.map((issue) => ({
+				message: issue.message,
+			})),
 		});
 	}
 
