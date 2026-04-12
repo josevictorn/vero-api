@@ -61,3 +61,12 @@ model Lead {
 
   @@map("leads")
 }
+
+model ScreeningFlow {
+  id        String   @id @default(uuid())
+  caseType  String   @map("case_type")
+  questions Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("screening_flows")
+}
