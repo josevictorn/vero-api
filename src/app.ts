@@ -15,6 +15,7 @@ import {
 import z, { ZodError } from "zod";
 import { env } from "@/env";
 import { workspacesRoutes } from "@/http/controllers/workspaces/routes";
+import { leadsRoutes } from "./http/controllers/leads/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
@@ -65,6 +66,7 @@ app.register(ScalarApiReference, {
 
 app.register(usersRoutes);
 app.register(workspacesRoutes);
+app.register(leadsRoutes);
 
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {
