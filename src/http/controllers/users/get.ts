@@ -20,13 +20,11 @@ export const GetUsersController: FastifyPluginAsyncZod = async (app) => {
 				response: {
 					200: z
 						.object({
-							user: z.object({
-								id: z.uuid(),
-								name: z.string(),
-								email: z.email(),
-								role: z.enum(Role),
-								created_at: z.date(),
-							}),
+							id: z.uuid(),
+							name: z.string(),
+							email: z.email(),
+							role: z.enum(Role),
+							created_at: z.date(),
 						})
 						.describe("User details"),
 					400: z
@@ -72,13 +70,11 @@ export const GetUsersController: FastifyPluginAsyncZod = async (app) => {
 			const { user } = result.value;
 
 			return reply.status(HTTP_STATUS.OK).send({
-				user: {
-					id: user.id,
-					name: user.name,
-					email: user.email,
-					role: user.role,
-					created_at: user.createdAt,
-				},
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+				created_at: user.createdAt,
 			});
 		}
 	);
