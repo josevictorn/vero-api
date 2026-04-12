@@ -27,6 +27,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  leads Lead[] @relation("LawyerLeads")
+
   @@map("users")
 }
 
@@ -39,5 +41,23 @@ model Workspace {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  leads Lead[]
+
   @@map("workspaces")
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  lawyerId    String?  @map("lawyer_id")
+  name        String
+  cellphone   String
+  email       String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lawyer    User?     @relation("LawyerLeads", fields: [lawyerId], references: [id])
+
+  @@map("leads")
 }
