@@ -29,3 +29,15 @@ model User {
 
   @@map("users")
 }
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String   @unique
+  email     String
+  cellphone String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("workspaces")
+}
