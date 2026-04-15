@@ -16,6 +16,7 @@ import z, { ZodError } from "zod";
 import { env } from "@/env";
 import { screeningFlowsRoutes } from "@/http/controllers/screening-flows/routes";
 import { workspacesRoutes } from "@/http/controllers/workspaces/routes";
+import { aiSessionsRoutes } from "@/http/controllers/ai-sessions/routes";
 import { leadsRoutes } from "./http/controllers/leads/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
@@ -69,6 +70,7 @@ app.register(usersRoutes);
 app.register(workspacesRoutes);
 app.register(leadsRoutes);
 app.register(screeningFlowsRoutes);
+app.register(aiSessionsRoutes);
 
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {
