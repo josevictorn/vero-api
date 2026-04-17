@@ -1,14 +1,14 @@
-import type { AiSession } from "@generated/prisma/client";
-import type { InputJsonValue } from "@generated/prisma/models";
+import type { AiSession, Prisma } from "@generated/prisma/client";
 import type { AiSessionRepository } from "@/repositories/ai-session-repository";
 import type { ScreeningFlowsRepository } from "@/repositories/screening-flows-repository";
 import { type Either, left, right } from "@/utils/either";
 import { ScreeningFlowNotFoundError } from "./errors/screening-flow-not-found-error";
 
+
 interface CreateAiSessionUseCaseRequest {
 	cellphone: string;
 	chatId: string;
-	chatState: InputJsonValue;
+	chatState: Prisma.InputJsonValue;
 	isThirdParty?: boolean;
 	name: string;
 	screeningFlowId?: string;

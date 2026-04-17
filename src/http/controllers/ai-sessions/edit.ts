@@ -1,4 +1,4 @@
-import type { InputJsonValue } from "@generated/prisma/models";
+import type { Prisma } from "@generated/prisma/client";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
@@ -77,7 +77,7 @@ export const EditAiSessionController: FastifyPluginAsyncZod = async (app) => {
 				screeningFlowId,
 				chatId,
 				status,
-				chatState: chatState as InputJsonValue,
+				chatState: chatState as Prisma.InputJsonValue,
 				name,
 				cellphone,
 				isThirdParty,
