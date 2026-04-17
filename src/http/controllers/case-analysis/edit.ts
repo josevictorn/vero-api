@@ -71,7 +71,7 @@ export const EditCaseAnalysisController: FastifyPluginAsyncZod = async (app) => 
                             message: error.message,
                         });
                     default:
-                        return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+                        return reply.status(HTTP_STATUS.BAD_REQUEST).send({
                             message: "An unexpected error occurred.",
                         });
                 }
