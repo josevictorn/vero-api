@@ -66,7 +66,7 @@ export const CreateLeadController: FastifyPluginAsyncZod = async (app) => {
 							message: error.message,
 						});
 					default:
-						return reply.status(HTTP_STATUS.BAD_REQUEST).send({
+						return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
 							message: "An unexpected error occurred.",
 						});
 				}
