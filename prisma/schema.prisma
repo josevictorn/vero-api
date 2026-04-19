@@ -18,6 +18,13 @@ enum Role {
   ASSISTANT
 }
 
+enum LeadStatus {
+  NEW_LEAD
+  INTERVIEWING
+  FORWARDED
+  COMPLETED
+}
+
 model User {
   id            String   @id @default(uuid())
   name          String
@@ -54,6 +61,7 @@ model Lead {
   name        String
   cellphone   String
   email       String
+  status      LeadStatus @default(NEW_LEAD) @map("lead_status")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
