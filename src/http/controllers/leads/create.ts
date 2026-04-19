@@ -23,6 +23,7 @@ export const CreateLeadController: FastifyPluginAsyncZod = async (app) => {
 					name: z.string().min(LEAD_NAME_MIN_LENGTH),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH),
 					email: z.email(),
+					status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]).optional(),
 				}),
 				response: {
 					201: z.object({ leadId: z.uuid() }),
@@ -42,7 +43,7 @@ export const CreateLeadController: FastifyPluginAsyncZod = async (app) => {
 			},
 		},
 		async (request, reply) => {
-			const { workspaceId, lawyerId, name, cellphone, email } = request.body;
+			const { workspaceId, lawyerId, name, cellphone, email, status } = request.body;
 			const createLeadUseCase = makeCreateLeadUseCase();
 
 			const result = await createLeadUseCase.execute({
@@ -51,6 +52,7 @@ export const CreateLeadController: FastifyPluginAsyncZod = async (app) => {
 				name,
 				cellphone,
 				email,
+				status,
 			});
 
 			if (result.isLeft()) {

@@ -1,4 +1,4 @@
-import type { Lead } from "@generated/prisma/client";
+import type { Lead, LeadStatus } from "@generated/prisma/client";
 import type { LeadsRepository } from "@/repositories/leads-repository";
 import type { UsersRepository } from "@/repositories/users-repository";
 import type { WorkspacesRepository } from "@/repositories/workspaces-repository";
@@ -11,6 +11,7 @@ interface CreateLeadUseCaseRequest {
 	email: string;
 	lawyerId?: string;
 	name: string;
+	status?: LeadStatus;
 	workspaceId: string;
 }
 
@@ -32,6 +33,7 @@ export class CreateLeadUseCase {
 		name,
 		cellphone,
 		email,
+		status,
 	}: CreateLeadUseCaseRequest): Promise<CreateLeadUseCaseResponse> {
 		const workspace = await this.workspacesRepository.findById(workspaceId);
 
@@ -53,6 +55,7 @@ export class CreateLeadUseCase {
 			name,
 			cellphone,
 			email,
+			status,
 		});
 
 		return right({

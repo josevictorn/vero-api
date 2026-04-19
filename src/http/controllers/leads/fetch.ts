@@ -31,6 +31,7 @@ export const FetchLeadsController: FastifyPluginAsyncZod = async (app) => {
 								name: z.string(),
 								cellphone: z.string(),
 								email: z.email(),
+								status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]),
 								created_at: z.date(),
 							})
 						),
@@ -78,6 +79,7 @@ export const FetchLeadsController: FastifyPluginAsyncZod = async (app) => {
 					name: lead.name,
 					cellphone: lead.cellphone,
 					email: lead.email,
+					status: lead.status,
 					created_at: lead.createdAt,
 				})),
 				meta,

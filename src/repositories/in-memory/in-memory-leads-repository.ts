@@ -25,6 +25,7 @@ export class InMemoryLeadsRepository implements LeadsRepository {
 			name: data.name,
 			cellphone: data.cellphone,
 			email: data.email,
+			status: data.status ?? "NEW_LEAD",
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		};

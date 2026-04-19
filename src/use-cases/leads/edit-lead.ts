@@ -1,4 +1,4 @@
-import type { Lead } from "@generated/prisma/client";
+import type { Lead, LeadStatus } from "@generated/prisma/client";
 import type { LeadsRepository } from "@/repositories/leads-repository";
 import type { UsersRepository } from "@/repositories/users-repository";
 import type { WorkspacesRepository } from "@/repositories/workspaces-repository";
@@ -13,6 +13,7 @@ interface EditLeadUseCaseRequest {
 	lawyerId?: string | null;
 	leadId: string;
 	name?: string;
+	status?: LeadStatus;
 	workspaceId?: string;
 }
 
@@ -35,6 +36,7 @@ export class EditLeadUseCase {
 		name,
 		cellphone,
 		email,
+		status,
 	}: EditLeadUseCaseRequest): Promise<EditLeadUseCaseResponse> {
 		const lead = await this.leadsRepository.findById(leadId);
 
@@ -63,6 +65,7 @@ export class EditLeadUseCase {
 		lead.name = name ?? lead.name;
 		lead.cellphone = cellphone ?? lead.cellphone;
 		lead.email = email ?? lead.email;
+		lead.status = status ?? lead.status;
 
 		const updatedLead = await this.leadsRepository.save(lead);
 
