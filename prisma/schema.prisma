@@ -24,12 +24,12 @@ model User {
   email         String   @unique
   password_hash String
   role          Role     @default(ASSISTANT)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   googleCalendarConnection GoogleCalendarConnection?
-  calendarEvents CalendarEvent[]
-  lawyer Lawyer?
+  calendarEvents           CalendarEvent[]
+  lawyer                   Lawyer?
 
   @@map("users")
 }
@@ -41,10 +41,10 @@ model Workspace {
   email     String
   cellphone String
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   lawyers Lawyer[]
-  leads Lead[]
+  leads   Lead[]
 
   @@map("workspaces")
 }
@@ -59,8 +59,8 @@ model Lead {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  lawyer       Lawyer?        @relation(fields: [lawyerId], references: [id])
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lawyer       Lawyer?       @relation(fields: [lawyerId], references: [id])
   caseAnalyses CaseAnalysis[]
 
   @@map("leads")
@@ -69,7 +69,7 @@ model Lead {
 model ScreeningFlow {
   id        String   @id @default(uuid())
   caseType  String   @map("case_type")
-  lawyerId    String?  @map("lawyer_id")
+  lawyerId  String?  @map("lawyer_id")
   questions Json
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -79,14 +79,14 @@ model ScreeningFlow {
 }
 
 model GoogleCalendarConnection {
-  id              String   @id @default(uuid())
-  userId          String   @unique @map("user_id")
-  googleEmail     String   @map("google_email")
-  accessToken     String   @map("access_token")
-  refreshToken    String   @map("refresh_token")
-  tokenExpiresAt  DateTime @map("token_expires_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  googleEmail    String   @map("google_email")
+  accessToken    String   @map("access_token")
+  refreshToken   String   @map("refresh_token")
+  tokenExpiresAt DateTime @map("token_expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -111,6 +111,7 @@ model CalendarEvent {
   @@index([userId])
   @@map("calendar_events")
 }
+
 model AiSession {
   id              String   @id @default(uuid())
   screeningFlowId String?  @map("screening_flow_id")
