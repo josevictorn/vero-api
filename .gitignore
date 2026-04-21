@@ -5,3 +5,7 @@ node_modules
 /generated/prisma
 
 /frontend
+
+redis_data/
+evolution_instances/
+evolution_store/
