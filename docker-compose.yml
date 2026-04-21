@@ -8,3 +8,62 @@ services:
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
       POSTGRES_DB: vero_api
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.5
+    container_name: evolution-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_URL=http://localhost:8080
+      - LOG_LEVEL=ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK,WEBHOOKS
+      
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+      
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=${DATABASE_URL_EVOLUTION}
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+      
+      - REDIS_ENABLED=true
+      - REDIS_URI=redis://redis:6379/1
+      - REDIS_PREFIX_KEY=evolution_api
+      
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/1
+      - CACHE_REDIS_PREFIX_KEY=evolution_api_cache
+      - CACHE_LOCAL_ENABLED=false
+
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1023204200
+
+      - RABBITMQ_ENABLED=false
+
+    volumes:
+      - ./evolution_instances:/evolution/instances
+      - ./evolution_store:/evolution/store
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+  redis:
+    image: redis
+    container_name: redis-ai
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always

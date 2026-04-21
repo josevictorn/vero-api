@@ -7,6 +7,9 @@ const envSchema = z.object({
 	JWT_SECRET: z.string(),
 	DATABASE_URL: z.url(),
 	DATABASE_SCHEMA: z.string().default("public"),
+	EVOLUTION_API_URL: z.url(),
+	EVOLUTION_API_KEY: z.string(),
+	EVOLUTION_INSTANCE_NAME: z.string(),
 });
 
 const _env = envSchema.safeParse(process.env);
