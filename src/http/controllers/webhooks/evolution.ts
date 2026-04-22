@@ -6,6 +6,9 @@ import {
 	extractPhoneNumber,
 	type EvolutionWebhookPayload,
 } from "@/providers/evolution/evolution-types";
+import { makeGetAiSessionByChatIdUseCase } from "@/use-cases/ai-session/factories/make-get-ai-session-by-chat-id-use-case";
+import { makeCreateAiSessionUseCase } from "@/use-cases/ai-session/factories/make-create-ai-session-use-case";
+import { AiSessionStatus } from "@generated/prisma/enums";
 
 export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 	app,
@@ -36,6 +39,9 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 				}),
 				response: {
 					200: z.object({ received: z.boolean() }),
+					500: z
+						.object({ message: z.string() })
+						.describe("Internal server error."),
 				},
 			},
 		},
@@ -64,18 +70,48 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 
 			const phoneNumber = extractPhoneNumber(payload.data.key.remoteJid);
 			const contactName = payload.data.pushName ?? "";
+			const chatId = payload.data.key.remoteJid;
 
 			// TODO: Implement orchestration logic here
 			// 1. Find or create AiSession by phoneNumber (chatId = remoteJid)
-			// 2. Based on session status, route to the appropriate agent:
-			//    - "identifying" → IdentifierAgent
-			//    - "interviewing" → InterviewerAgent
-			//    - "analyzing" → CaseAnalyzerAgent
-			// 3. Update AiSession with agent response
-			// 4. Send response via Evolution API (sendTextMessage)
-			console.log(
-				`[Webhook] Message from ${contactName} (${phoneNumber}): ${messageText}`,
-			);
+			const getAiSessionByChatIdUseCase = makeGetAiSessionByChatIdUseCase();
+
+			const getSessionResult = await getAiSessionByChatIdUseCase.execute({ aiSessionChatId: chatId });
+
+			let activeSession;
+
+			if (getSessionResult.isLeft() || getSessionResult.value.aiSession.status === AiSessionStatus.BOOKED) {
+				const createAiSessionUseCase = makeCreateAiSessionUseCase();
+				const createResult = await createAiSessionUseCase.execute({
+					cellphone: phoneNumber,
+					chatId: chatId,
+					name: contactName,
+					chatState: {}
+				});
+
+				if (createResult.isLeft()) {
+					return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+						message: "An unexpected error occurred.",
+					});
+				}
+
+				activeSession = createResult.value.aiSession;
+			} else {
+				activeSession = getSessionResult.value.aiSession;
+			}
+
+			switch (activeSession.status) {
+				case AiSessionStatus.IDENTIFYING:
+					break;
+				case AiSessionStatus.INTERVIEWING:
+					break;
+				case AiSessionStatus.FORWARDED:
+					break;
+				case AiSessionStatus.BOOKING:
+					break;
+				case AiSessionStatus.BOOKED:
+					break;
+			}
 
 			return reply
 				.status(HTTP_STATUS.OK)
