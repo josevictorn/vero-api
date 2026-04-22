@@ -4,18 +4,22 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["vero"]
 }
 
 enum Role {
   ADMIN
   LAWYER
   ASSISTANT
+
+  @@schema("vero")
 }
 
 enum LeadStatus {
@@ -23,6 +27,18 @@ enum LeadStatus {
   INTERVIEWING
   FORWARDED
   COMPLETED
+
+  @@schema("vero")
+}
+
+enum AiSessionStatus {
+  IDENTIFYING
+  INTERVIEWING
+  FORWARDED
+  BOOKING
+  BOOKED
+
+  @@schema("vero")
 }
 
 model User {
@@ -37,6 +53,7 @@ model User {
   lawyer Lawyer?
 
   @@map("users")
+  @@schema("vero")
 }
 
 model Workspace {
@@ -52,6 +69,7 @@ model Workspace {
   leads Lead[]
 
   @@map("workspaces")
+  @@schema("vero")
 }
 
 model Lead {
@@ -70,6 +88,7 @@ model Lead {
   caseAnalyses CaseAnalysis[]
 
   @@map("leads")
+  @@schema("vero")
 }
 
 model ScreeningFlow {
@@ -82,13 +101,14 @@ model ScreeningFlow {
   aiSessions AiSession[]
 
   @@map("screening_flows")
+  @@schema("vero")
 }
 
 model AiSession {
   id              String   @id @default(uuid())
   screeningFlowId String?  @map("screening_flow_id")
   chatId          String   @map("chat_id")
-  status          String
+  status          AiSessionStatus @default(IDENTIFYING)
   chatState       Json     @map("chat_state")
   name            String
   cellphone       String
@@ -99,6 +119,7 @@ model AiSession {
   caseAnalyses  CaseAnalysis[]
 
   @@map("ai_sessions")
+  @@schema("vero")
 }
 
 model CaseAnalysis {
@@ -116,6 +137,7 @@ model CaseAnalysis {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("case_analyses")
+  @@schema("vero")
 }
 
 model Lawyer {
@@ -130,4 +152,5 @@ model Lawyer {
   leads     Lead[]
 
   @@map("lawyers")
+  @@schema("vero")
 }
