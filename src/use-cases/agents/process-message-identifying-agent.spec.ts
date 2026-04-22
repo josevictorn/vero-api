@@ -58,7 +58,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			chatMemoryProvider,
 		);
 
-		// Create a workspace (single-tenant)
 		await workspacesRepository.create({
 			name: "Escritório Vero",
 			cnpj: "12345678000100",
@@ -66,7 +65,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			cellphone: "11999999999",
 		});
 
-		// Create screening flows
 		await screeningFlowsRepository.create({
 			caseType: "Trabalhista",
 			questions: [{ question: "Quanto tempo trabalhou?" }],
@@ -163,7 +161,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			expect(result.value.messageToClient).toContain("Trabalhista");
 		}
 
-		// Verify session was updated
 		const updatedSession = await aiSessionRepository.findById(aiSession.id);
 		expect(updatedSession?.status).toBe(AiSessionStatus.INTERVIEWING);
 		expect(updatedSession?.name).toBe("João da Silva");
@@ -195,7 +192,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 
 		const updatedSession = await aiSessionRepository.findById(aiSession.id);
 
-		// Find the previdenciário flow to compare
 		const flows = await screeningFlowsRepository.findMany({ page: 1 });
 		const previdenciarioFlow = flows.items.find(
 			(sf) => sf.caseType === "Previdenciário",
@@ -246,7 +242,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			chatState: {},
 		});
 
-		// First message
 		mockAgent.mockOutput = {
 			messageToClient: "Olá! Qual seu nome?",
 			identifiedCategory: "nao_identificado",
@@ -256,7 +251,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 
 		await sut.execute({ aiSession, messageText: "Oi" });
 
-		// Second message
 		mockAgent.mockOutput = {
 			messageToClient: "João, como posso te ajudar?",
 			identifiedCategory: "nao_identificado",
@@ -299,7 +293,6 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 	});
 
 	it("should return error when no workspace is configured", async () => {
-		// Clear the workspace
 		const workspaces = await workspacesRepository.findMany({ page: 1 });
 		for (const ws of workspaces.items) {
 			await workspacesRepository.delete(ws.id);

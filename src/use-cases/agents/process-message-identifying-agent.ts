@@ -7,7 +7,6 @@ import type { IdentifierAgent } from "@/providers/agents/identifier/identifier-a
 import type { ChatMemoryProvider } from "@/providers/agents/memory/chat-memory-provider";
 import type { ChatMessage } from "@/providers/agents/types/chat-message";
 import { type Either, left, right } from "@/utils/either";
-import { ITEM_PER_PAGE } from "@/utils/constants";
 import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
 import { WorkspaceNotConfiguredError } from "./errors/workspace-not-configured-error";
 import { ScreeningFlowNotMatchedError } from "./errors/screening-flow-not-matched-error";
