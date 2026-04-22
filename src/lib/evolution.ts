@@ -29,7 +29,7 @@ export async function sendTextMessage({
 
 	if (!response.ok) {
 		const errorBody = await response.text();
-		console.error(
+		throw new Error(
 			`[EvolutionAPI] Failed to send message to ${to}: ${response.status} - ${errorBody}`,
 		);
 	}
