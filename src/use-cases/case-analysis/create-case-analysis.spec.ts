@@ -3,6 +3,7 @@ import { InMemoryAiSessionRepository } from "@/repositories/in-memory/in-memory-
 import { InMemoryCaseAnalysisRepository } from "@/repositories/in-memory/in-memory-case-analysis-repository";
 import { CreateCaseAnalysisUseCase } from "./create-case-analysis";
 import { AiSessionNotFoundError } from "../ai-session/errors/ai-session-not-found-error";
+import { AiSessionStatus } from "@generated/prisma/client";
 
 let aiSessionRepository: InMemoryAiSessionRepository;
 let caseAnalysisRepository: InMemoryCaseAnalysisRepository;
@@ -21,7 +22,7 @@ describe("Create Case Analysis Use Case", () => {
 	it("should be able to create a case analysis", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-1",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: {},
 			name: "Session 1",
 			cellphone: "11999990001",

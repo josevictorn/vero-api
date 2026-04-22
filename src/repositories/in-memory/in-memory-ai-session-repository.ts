@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { AiSession, Prisma } from "@generated/prisma/client";
+import { AiSessionStatus } from "@generated/prisma/client";
 import type { AiSessionRepository } from "@/repositories/ai-session-repository";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import type { PaginationParams } from "@/utils/pagination-params";
@@ -17,12 +18,22 @@ export class InMemoryAiSessionRepository implements AiSessionRepository {
 		return aiSession;
 	}
 
+	async findByChatId(chatId: string) {
+		const aiSession = this.items.find((item) => item.chatId === chatId);
+
+		if (!aiSession) {
+			return null;
+		}
+
+		return aiSession;
+	}
+
 	async create(data: Prisma.AiSessionUncheckedCreateInput) {
 		const aiSession: AiSession = {
 			id: randomUUID(),
 			screeningFlowId: data.screeningFlowId ?? null,
 			chatId: data.chatId,
-			status: data.status,
+			status: data.status ?? AiSessionStatus.IDENTIFYING,
 			chatState: data.chatState as AiSession["chatState"],
 			name: data.name,
 			cellphone: data.cellphone,

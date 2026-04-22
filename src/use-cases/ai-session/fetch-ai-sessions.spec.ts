@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { AiSessionStatus } from "@generated/prisma/client";
 import { InMemoryAiSessionRepository } from "@/repositories/in-memory/in-memory-ai-session-repository";
 import { InvalidPageError } from "./errors/invalid-page-error";
 import { FetchAiSessionsUseCase } from "./fetch-ai-sessions";
@@ -15,7 +16,7 @@ describe("Fetch AI Sessions Use Case", () => {
 	it("should be able to fetch ai sessions", async () => {
 		const aiSession1 = await aiSessionRepository.create({
 			chatId: "chat-001",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "Session 1",
 			cellphone: "11999990001",
@@ -23,7 +24,7 @@ describe("Fetch AI Sessions Use Case", () => {
 
 		const aiSession2 = await aiSessionRepository.create({
 			chatId: "chat-002",
-			status: "completed",
+			status: AiSessionStatus.BOOKED,
 			chatState: { step: 3 },
 			name: "Session 2",
 			cellphone: "11999990002",

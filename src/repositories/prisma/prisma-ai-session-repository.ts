@@ -63,4 +63,12 @@ export class PrismaAiSessionRepository implements AiSessionRepository {
         return updatedAisession;
     }
 
+    async findByChatId(chatId: string): Promise<AiSession | null> {
+        const aiSession = await prisma.aiSession.findFirst({
+            where: {chatId}
+        })
+
+        return aiSession;
+    }
+
 }

@@ -1,4 +1,4 @@
-import type { Prisma } from "@generated/prisma/client";
+import { type Prisma, AiSessionStatus } from "@generated/prisma/client";
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
@@ -24,7 +24,7 @@ export const EditAiSessionController: FastifyPluginAsyncZod = async (app) => {
 				body: z.object({
 					screeningFlowId: z.uuid().nullable().optional(),
 					chatId: z.string().min(1).optional(),
-					status: z.string().min(1).optional(),
+					status: z.nativeEnum(AiSessionStatus).optional(),
 					chatState: z.any().optional(),
 					name: z.string().min(NAME_MIN_LENGTH).optional(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH).optional(),
@@ -36,7 +36,7 @@ export const EditAiSessionController: FastifyPluginAsyncZod = async (app) => {
 							id: z.uuid(),
 							screening_flow_id: z.uuid().nullable(),
 							chat_id: z.string(),
-							status: z.string(),
+							status: z.nativeEnum(AiSessionStatus),
 							chat_state: z.any(),
 							name: z.string(),
 							cellphone: z.string(),

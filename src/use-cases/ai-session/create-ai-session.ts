@@ -1,4 +1,4 @@
-import type { AiSession, Prisma } from "@generated/prisma/client";
+import type { AiSession, AiSessionStatus, Prisma } from "@generated/prisma/client";
 import type { AiSessionRepository } from "@/repositories/ai-session-repository";
 import type { ScreeningFlowsRepository } from "@/repositories/screening-flows-repository";
 import { type Either, left, right } from "@/utils/either";
@@ -12,7 +12,7 @@ interface CreateAiSessionUseCaseRequest {
 	isThirdParty?: boolean;
 	name: string;
 	screeningFlowId?: string;
-	status: string;
+	status?: AiSessionStatus;
 }
 
 type CreateAiSessionUseCaseResponse = Either<
