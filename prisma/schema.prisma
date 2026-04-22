@@ -27,6 +27,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  googleCalendarConnection GoogleCalendarConnection?
+  calendarEvents CalendarEvent[]
   lawyer Lawyer?
 
   @@map("users")
@@ -76,6 +78,39 @@ model ScreeningFlow {
   @@map("screening_flows")
 }
 
+model GoogleCalendarConnection {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  googleEmail     String   @map("google_email")
+  accessToken     String   @map("access_token")
+  refreshToken    String   @map("refresh_token")
+  tokenExpiresAt  DateTime @map("token_expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("google_calendar_connections")
+}
+
+model CalendarEvent {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  googleEventId String   @map("google_event_id")
+  summary       String
+  description   String?
+  startsAt      DateTime @map("starts_at")
+  endsAt        DateTime @map("ends_at")
+  hangoutLink   String?  @map("hangout_link")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, googleEventId])
+  @@index([userId])
+  @@map("calendar_events")
+}
 model AiSession {
   id              String   @id @default(uuid())
   screeningFlowId String?  @map("screening_flow_id")
