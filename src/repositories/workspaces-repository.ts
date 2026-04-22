@@ -7,6 +7,7 @@ export interface WorkspacesRepository {
 	delete(id: string): Promise<void>;
 	findByCnpj(cnpj: string): Promise<Workspace | null>;
 	findById(id: string): Promise<Workspace | null>;
+	findFirst(): Promise<Workspace | null>;
 	findMany(params: PaginationParams): Promise<PaginatedResult<Workspace>>;
 	save(workspace: Workspace): Promise<Workspace>;
 }

@@ -27,6 +27,10 @@ export class InMemoryWorkspacesRepository implements WorkspacesRepository {
 		return workspace;
 	}
 
+	async findFirst() {
+		return this.items[0] ?? null;
+	}
+
 	async create(data: Prisma.WorkspaceCreateInput) {
 		const workspace = {
 			id: randomUUID(),
