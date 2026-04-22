@@ -8,8 +8,13 @@ import {
 } from "@/providers/evolution/evolution-types";
 import { makeGetAiSessionByChatIdUseCase } from "@/use-cases/ai-session/factories/make-get-ai-session-by-chat-id-use-case";
 import { makeCreateAiSessionUseCase } from "@/use-cases/ai-session/factories/make-create-ai-session-use-case";
+import { makeProcessMessageIdentifyingAgentUseCase } from "@/use-cases/agents/factories/make-process-message-identifying-agent";
+import { sendTextMessage } from "@/lib/evolution";
 import { AiSessionStatus } from "@generated/prisma/enums";
-
+import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
+import { WorkspaceNotConfiguredError } from "@/use-cases/agents/errors/workspace-not-configured-error";
+import { ScreeningFlowNotMatchedError } from "@/use-cases/agents/errors/screening-flow-not-matched-error";
+import { ScreeningFlowNotFoundError } from "@/use-cases/ai-session/errors/screening-flow-not-found-error";
 export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 	app,
 ) => {
@@ -39,6 +44,11 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 				}),
 				response: {
 					200: z.object({ received: z.boolean() }),
+					400: z
+						.object({ message: z.string() }),
+					404: z
+						.object({ message: z.string() })
+						.describe("Resource not found."),
 					500: z
 						.object({ message: z.string() })
 						.describe("Internal server error."),
@@ -72,8 +82,6 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 			const contactName = payload.data.pushName ?? "";
 			const chatId = payload.data.key.remoteJid;
 
-			// TODO: Implement orchestration logic here
-			// 1. Find or create AiSession by phoneNumber (chatId = remoteJid)
 			const getAiSessionByChatIdUseCase = makeGetAiSessionByChatIdUseCase();
 
 			const getSessionResult = await getAiSessionByChatIdUseCase.execute({ aiSessionChatId: chatId });
@@ -90,9 +98,18 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 				});
 
 				if (createResult.isLeft()) {
-					return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
-						message: "An unexpected error occurred.",
-					});
+					const error = createResult.value;
+
+					switch (error.constructor) {
+						case ScreeningFlowNotFoundError:
+							return reply.status(HTTP_STATUS.NOT_FOUND).send({
+								message: error.message,
+							});
+						default:
+							return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+								message: "An unexpected error occurred.",
+							});
+					}
 				}
 
 				activeSession = createResult.value.aiSession;
@@ -101,8 +118,44 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 			}
 
 			switch (activeSession.status) {
-				case AiSessionStatus.IDENTIFYING:
+				case AiSessionStatus.IDENTIFYING: {
+					const identifyingUseCase = makeProcessMessageIdentifyingAgentUseCase();
+					const result = await identifyingUseCase.execute({
+						aiSession: activeSession,
+						messageText,
+					});
+
+					if (result.isLeft()) {
+						const error = result.value;
+
+						switch (error.constructor) {
+							case WorkspaceNotConfiguredError:
+								return reply.status(HTTP_STATUS.NOT_FOUND).send({
+									message: error.message,
+								});
+							case ScreeningFlowNotMatchedError:
+								return reply.status(HTTP_STATUS.NOT_FOUND).send({
+									message: error.message,
+								});
+							case AgentResponseError:
+								return reply.status(HTTP_STATUS.BAD_REQUEST).send({
+									message: error.message,
+								});
+							default:
+								return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+									message: "An unexpected error occurred.",
+								});
+						}
+					}
+
+					console.log(result.value.messageToClient);
+
+					await sendTextMessage({
+						to: chatId,
+						text: result.value.messageToClient,
+					});
 					break;
+				}
 				case AiSessionStatus.INTERVIEWING:
 					break;
 				case AiSessionStatus.FORWARDED:
@@ -119,3 +172,4 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 		},
 	);
 };
+
