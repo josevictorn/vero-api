@@ -14,9 +14,12 @@ import {
 } from "fastify-type-provider-zod";
 import z, { ZodError } from "zod";
 import { env } from "@/env";
+import { aiSessionsRoutes } from "@/http/controllers/ai-sessions/routes";
 import { calendarRoutes } from "@/http/controllers/calendar/routes";
+import { caseAnalysisRoutes } from "@/http/controllers/case-analysis/routes";
 import { screeningFlowsRoutes } from "@/http/controllers/screening-flows/routes";
 import { workspacesRoutes } from "@/http/controllers/workspaces/routes";
+import { lawyersRoutes } from "./http/controllers/lawyers/routes";
 import { leadsRoutes } from "./http/controllers/leads/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
@@ -71,6 +74,9 @@ app.register(workspacesRoutes);
 app.register(leadsRoutes);
 app.register(screeningFlowsRoutes);
 app.register(calendarRoutes);
+app.register(aiSessionsRoutes);
+app.register(caseAnalysisRoutes);
+app.register(lawyersRoutes);
 
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {
