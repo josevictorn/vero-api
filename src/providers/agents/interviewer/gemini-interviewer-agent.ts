@@ -11,7 +11,7 @@ import type {
 } from "./interviewer-agent";
 import { buildInterviewerSystemPrompt } from "./interviewer-prompt";
 
-const AGENT_NAME = "Entrevistador";
+const AGENT_NAME = "interviewer";
 const MODEL = "gemini-3-flash-preview";
 
 const interviewerResponseSchema = z.object({

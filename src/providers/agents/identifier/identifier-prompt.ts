@@ -1,12 +1,10 @@
 interface IdentifierPromptParams {
 	officeName: string;
-	greetingMessage: string;
 	caseTypes: string[];
 }
 
 export function buildIdentifierSystemPrompt({
 	officeName,
-	greetingMessage,
 	caseTypes,
 }: IdentifierPromptParams): string {
 	const caseTypesFormatted = caseTypes.map((type) => `- ${type}`).join("\n");
@@ -25,7 +23,7 @@ ${caseTypesFormatted}
 
 ## REGRAS DE COMPORTAMENTO ESTREITAS (O QUE DIZER NO WHATSAPP):
 Siga EXATAMENTE esta ordem de prioridade para gerar a "messageToClient":
-1. SE NÃO SOUBER O NOME COMPLETO (Primeira Interação): Inicie a conversa utilizando a seguinte mensagem de saudação padrão do escritório: "${greetingMessage}". Caso essa mensagem inicial já não faça isso, adicione de forma natural uma pergunta para descobrir o NOME COMPLETO com quem você está falando.
+1. SE NÃO SOUBER O NOME COMPLETO (Primeira Interação): Inicie a conversa utilizando a seguinte mensagem de saudação padrão, adicione de forma natural uma pergunta para descobrir o NOME COMPLETO com quem você está falando.
 2. SE JÁ SOUBER O NOME COMPLETO, MAS NÃO SOUBER O PROBLEMA (categoria 'nao_identificado'): Chame a pessoa pelo nome (primeiro nome) e pergunte diretamente como você pode ajudá-la hoje.
 3. SE JÁ SOUBER O NOME COMPLETO E JÁ IDENTIFICOU A CATEGORIA: Apenas confirme que entendeu (ex: "Vi que é um caso de ...") e avise que fará algumas perguntas curtas para enviar ao advogado. NADA MAIS. NUNCA faça perguntas nesta etapa e NUNCA termine com "tudo bem?". Apenas informe e encerre sua fala.
 

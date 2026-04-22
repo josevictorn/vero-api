@@ -5,7 +5,6 @@ import type { AgentResponseError } from "../errors/agent-response-error";
 export interface IdentifierAgentInput {
 	message: string;
 	officeName: string;
-	greetingMessage: string;
 	caseTypes: string[];
 	chatHistory?: ChatMessage[];
 }

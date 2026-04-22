@@ -10,7 +10,7 @@ import type {
 } from "./case-analyzer-agent";
 import { buildCaseAnalyzerSystemPrompt } from "./case-analyzer-prompt";
 
-const AGENT_NAME = "AnalisadorDeCasos";
+const AGENT_NAME = "caseAnalyzer";
 const MODEL = "gemini-3-flash-preview";
 
 const caseAnalyzerResponseSchema = z.object({

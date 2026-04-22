@@ -11,7 +11,7 @@ import type {
 } from "./identifier-agent";
 import { buildIdentifierSystemPrompt } from "./identifier-prompt";
 
-const AGENT_NAME = "Identificador";
+const AGENT_NAME = "identifier";
 const MODEL = "gemini-3-flash-preview";
 
 const identifierResponseSchema = z.object({
@@ -64,7 +64,6 @@ export class GeminiIdentifierAgent implements IdentifierAgent {
 	): Promise<Either<AgentResponseError, IdentifierAgentOutput>> {
 		const systemInstruction = buildIdentifierSystemPrompt({
 			officeName: input.officeName,
-			greetingMessage: input.greetingMessage,
 			caseTypes: input.caseTypes,
 		});
 
