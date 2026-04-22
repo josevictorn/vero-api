@@ -10,6 +10,7 @@ const envSchema = z.object({
 	EVOLUTION_API_URL: z.url(),
 	EVOLUTION_API_KEY: z.string(),
 	EVOLUTION_INSTANCE_NAME: z.string(),
+	REDIS_URL: z.string().default("redis://localhost:6379"),
 });
 
 const _env = envSchema.safeParse(process.env);
