@@ -2,260 +2,237 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { EditClientUseCase } from "./edit-client";
 
 import { InMemoryClientsRepository } from "@/repositories/in-memory/in-memory-clients-repository";
-import { InMemoryUsersRepository } from "@/repositories/in-memory/in-memory-users-repository";
 import { InMemoryWorkspacesRepository } from "@/repositories/in-memory/in-memory-workspaces-repository";
+import { InMemoryLawyersRepository } from "@/repositories/in-memory/in-memory-lawyers-repository";
 
 import { ClientNotFoundError } from "./errors/client-not-found-error";
 import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error";
 import { LawyerNotFoundError } from "../leads/errors/lawyer-not-found-error";
 
 let clientsRepository: InMemoryClientsRepository;
-let usersRepository: InMemoryUsersRepository;
 let workspacesRepository: InMemoryWorkspacesRepository;
+let lawyersRepository: InMemoryLawyersRepository;
 let sut: EditClientUseCase;
 
 describe("Edit Client Use Case", () => {
-	beforeEach(() => {
-		clientsRepository = new InMemoryClientsRepository();
-		usersRepository = new InMemoryUsersRepository();
-		workspacesRepository = new InMemoryWorkspacesRepository();
+  beforeEach(() => {
+    clientsRepository = new InMemoryClientsRepository();
+    workspacesRepository = new InMemoryWorkspacesRepository();
+    lawyersRepository = new InMemoryLawyersRepository();
 
-		sut = new EditClientUseCase(
-			clientsRepository,
-			usersRepository,
-			workspacesRepository
-		);
-	});
+    sut = new EditClientUseCase(
+      clientsRepository,
+      lawyersRepository,
+      workspacesRepository
+    );
+  });
 
+  it("should be able to edit a client fully", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace 1",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-	it("should be able to update client basic data", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
+    const client = await clientsRepository.create({
+      name: "Old Name",
+      email: "old@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: null,
+    });
 
-		const client = await clientsRepository.create({
-			name: "Old Name",
-			email: "old@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: null,
-		});
+    const newWorkspace = await workspacesRepository.create({
+      name: "Workspace 2",
+      cnpj: "98765432000199",
+      email: "ws2@test.com",
+      cellphone: "84922222222",
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			name: "New Name",
-			email: "new@test.com",
-		});
+    const lawyer = await lawyersRepository.create({
+      userId: "user-1",
+      workspaceId: newWorkspace.id,
+      cellphone: "84933333333",
+    });
 
-		expect(result.isRight()).toBe(true);
+    const result = await sut.execute({
+      clientId: client.id,
+      name: "New Name",
+      email: "new@test.com",
+      cellphone: "84944444444",
+      workspaceId: newWorkspace.id,
+      lawyerId: lawyer.id,
+    });
 
-		if (result.isRight()) {
-			expect(result.value.client.name).toBe("New Name");
-			expect(result.value.client.email).toBe("new@test.com");
-			expect(result.value.client.cellphone).toBe("111"); // não mudou
-		}
-	});
+    expect(result.isRight()).toBe(true);
 
-	it("should be able to change workspace", async () => {
-		const workspace1 = await workspacesRepository.create({
-			name: "W1",
-			cnpj: "1",
-			email: "1@test.com",
-			cellphone: "1",
-		});
+    if (result.isRight()) {
+      const updated = result.value.client;
 
-		const workspace2 = await workspacesRepository.create({
-			name: "W2",
-			cnpj: "2",
-			email: "2@test.com",
-			cellphone: "2",
-		});
+      expect(updated.name).toBe("New Name");
+      expect(updated.email).toBe("new@test.com");
+      expect(updated.cellphone).toBe("84944444444");
+      expect(updated.workspaceId).toBe(newWorkspace.id);
+      expect(updated.lawyerId).toBe(lawyer.id);
+    }
+  });
 
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace1.id,
-			lawyerId: null,
-		});
+  it("should be able to partially update a client", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			workspaceId: workspace2.id,
-		});
+    const client = await clientsRepository.create({
+      name: "Original",
+      email: "original@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: null,
+    });
 
-		expect(result.isRight()).toBe(true);
+    const result = await sut.execute({
+      clientId: client.id,
+      name: "Updated Name",
+    });
 
-		if (result.isRight()) {
-			expect(result.value.client.workspaceId).toBe(workspace2.id);
-		}
-	});
+    expect(result.isRight()).toBe(true);
 
-	it("should be able to assign a lawyer", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
+    if (result.isRight()) {
+      const updated = result.value.client;
 
-		const lawyer = await usersRepository.create({
-			name: "Lawyer",
-			email: "lawyer@test.com",
-			password_hash: "123",
-			role: "LAWYER",
-		});
+      expect(updated.name).toBe("Updated Name");
+      expect(updated.email).toBe("original@test.com"); // não mudou
+    }
+  });
 
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: null,
-		});
+  it("should not update when client does not exist", async () => {
+    const result = await sut.execute({
+      clientId: "invalid-id",
+      name: "Test",
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			lawyerId: lawyer.id,
-		});
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(ClientNotFoundError);
+  });
 
-		expect(result.isRight()).toBe(true);
+  it("should not update when workspace does not exist", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-		if (result.isRight()) {
-			expect(result.value.client.lawyerId).toBe(lawyer.id);
-		}
-	});
+    const client = await clientsRepository.create({
+      name: "Client",
+      email: "client@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: null,
+    });
 
-	it("should be able to remove lawyer (set null)", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
+    const result = await sut.execute({
+      clientId: client.id,
+      workspaceId: "invalid-workspace",
+    });
 
-		const lawyer = await usersRepository.create({
-			name: "Lawyer",
-			email: "lawyer@test.com",
-			password_hash: "123",
-			role: "LAWYER",
-		});
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(WorkspaceNotFoundError);
+  });
 
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: lawyer.id,
-		});
+  it("should not update when lawyer does not exist", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			lawyerId: null,
-		});
+    const client = await clientsRepository.create({
+      name: "Client",
+      email: "client@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: null,
+    });
 
-		expect(result.isRight()).toBe(true);
+    const result = await sut.execute({
+      clientId: client.id,
+      lawyerId: "invalid-lawyer",
+    });
 
-		if (result.isRight()) {
-			expect(result.value.client.lawyerId).toBeNull();
-		}
-	});
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(LawyerNotFoundError);
+  });
 
-	it("should not change lawyer when lawyerId is undefined", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
+  it("should allow setting lawyerId to null (removing lawyer)", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-		const lawyer = await usersRepository.create({
-			name: "Lawyer",
-			email: "lawyer@test.com",
-			password_hash: "123",
-			role: "LAWYER",
-		});
+    const lawyer = await lawyersRepository.create({
+      userId: "user-1",
+      workspaceId: workspace.id,
+      cellphone: "84933333333",
+    });
 
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: lawyer.id,
-		});
+    const client = await clientsRepository.create({
+      name: "Client",
+      email: "client@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: lawyer.id,
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			name: "Updated",
-		});
+    const result = await sut.execute({
+      clientId: client.id,
+      lawyerId: null,
+    });
 
-		expect(result.isRight()).toBe(true);
+    expect(result.isRight()).toBe(true);
 
-		if (result.isRight()) {
-			expect(result.value.client.lawyerId).toBe(lawyer.id);
-		}
-	});
+    if (result.isRight()) {
+      expect(result.value.client.lawyerId).toBeNull();
+    }
+  });
 
-	it("should not be able to update non-existing client", async () => {
-		const result = await sut.execute({
-			clientId: "invalid-id",
-			name: "Test",
-		});
+  it("should keep lawyerId unchanged when undefined", async () => {
+    const workspace = await workspacesRepository.create({
+      name: "Workspace",
+      cnpj: "12345678000199",
+      email: "ws@test.com",
+      cellphone: "84999999999",
+    });
 
-		expect(result.isLeft()).toBe(true);
-		expect(result.value).toBeInstanceOf(ClientNotFoundError);
-	});
+    const lawyer = await lawyersRepository.create({
+      userId: "user-1",
+      workspaceId: workspace.id,
+      cellphone: "84933333333",
+    });
 
-	it("should not update with non-existing workspace", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
+    const client = await clientsRepository.create({
+      name: "Client",
+      email: "client@test.com",
+      cellphone: "84911111111",
+      workspaceId: workspace.id,
+      lawyerId: lawyer.id,
+    });
 
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: null,
-		});
+    const result = await sut.execute({
+      clientId: client.id,
+    });
 
-		const result = await sut.execute({
-			clientId: client.id,
-			workspaceId: "invalid-workspace",
-		});
+    expect(result.isRight()).toBe(true);
 
-		expect(result.isLeft()).toBe(true);
-		expect(result.value).toBeInstanceOf(WorkspaceNotFoundError);
-	});
-
-	it("should not update with non-existing lawyer", async () => {
-		const workspace = await workspacesRepository.create({
-			name: "Workspace",
-			cnpj: "123",
-			email: "w@test.com",
-			cellphone: "999",
-		});
-
-		const client = await clientsRepository.create({
-			name: "Client",
-			email: "c@test.com",
-			cellphone: "111",
-			workspaceId: workspace.id,
-			lawyerId: null,
-		});
-
-		const result = await sut.execute({
-			clientId: client.id,
-			lawyerId: "invalid-lawyer",
-		});
-
-		expect(result.isLeft()).toBe(true);
-		expect(result.value).toBeInstanceOf(LawyerNotFoundError);
-	});
+    if (result.isRight()) {
+      expect(result.value.client.lawyerId).toBe(lawyer.id);
+    }
+  });
 });
