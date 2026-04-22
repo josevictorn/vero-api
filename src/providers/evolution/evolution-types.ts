@@ -20,10 +20,6 @@ export interface EvolutionWebhookPayload {
 	apikey: string;
 }
 
-/**
- * Extracts the text content from the Evolution API message payload.
- * Handles both `conversation` (simple text) and `extendedTextMessage` (quoted/reply) formats.
- */
 export function extractMessageText(
 	payload: EvolutionWebhookPayload,
 ): string | null {
@@ -40,9 +36,6 @@ export function extractMessageText(
 	return null;
 }
 
-/**
- * Extracts the phone number from the remoteJid (removes @s.whatsapp.net suffix).
- */
 export function extractPhoneNumber(remoteJid: string): string {
 	return remoteJid.replace("@s.whatsapp.net", "");
 }
