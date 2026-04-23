@@ -1,11 +1,11 @@
 import { ClientsRepository } from "@/repositories/clients-repository";
 import { WorkspacesRepository } from "@/repositories/workspaces-repository";
-import { LawyersRepository } from "@/repositories/lawyers-repository";
 import { type Either, left, right } from "@/utils/either";
 import { Client} from "@generated/prisma/client";
 import { ClientNotFoundError } from "./errors/client-not-found-error";
 import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error";
 import { LawyerNotFoundError } from "../leads/errors/lawyer-not-found-error";
+import { UsersRepository } from "@/repositories/users-repository";
 
 interface EditClientUseCaseRequest {
   clientId: string;
@@ -23,7 +23,7 @@ type EditClientUseCaseResponse = Either<
 export class EditClientUseCase {
     constructor(
         private readonly clientsRepository: ClientsRepository,
-        private readonly lawyerRepository: LawyersRepository,
+        private readonly usersRepository: UsersRepository,
         private readonly workspacesRepository: WorkspacesRepository
     ) {}
 
@@ -50,7 +50,7 @@ export class EditClientUseCase {
         }
 
         if (lawyerId !== undefined && lawyerId !== null) {
-            const lawyer = await this.lawyerRepository.findById(lawyerId);
+            const lawyer = await this.usersRepository.findById(lawyerId);
 
             if (!lawyer) {
                 return left(new LawyerNotFoundError(lawyerId));
