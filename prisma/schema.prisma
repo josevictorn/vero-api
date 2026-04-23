@@ -78,7 +78,7 @@ model Lead {
   lawyerId    String?  @map("lawyer_id")
   name        String
   cellphone   String
-  email       String
+  email       String?
   status      LeadStatus @default(NEW_LEAD) @map("lead_status")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")

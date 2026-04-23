@@ -26,7 +26,7 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 					lawyerId: z.uuid().nullable().optional(),
 					name: z.string().min(LEAD_NAME_MIN_LENGTH).optional(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH).optional(),
-					email: z.email().optional(),
+					email: z.string().email().optional().nullable(),
 					status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]).optional(),
 				}),
 				response: {
@@ -37,7 +37,7 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 							lawyer_id: z.uuid().nullable(),
 							name: z.string(),
 							cellphone: z.string(),
-							email: z.email(),
+							email: z.string().email().nullable(),
 							status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]),
 							created_at: z.date(),
 						}),

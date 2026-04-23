@@ -22,7 +22,7 @@ export const CreateLeadController: FastifyPluginAsyncZod = async (app) => {
 					lawyerId: z.uuid().optional(),
 					name: z.string().min(LEAD_NAME_MIN_LENGTH),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH),
-					email: z.email(),
+					email: z.string().email().optional().nullable(),
 					status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]).optional(),
 				}),
 				response: {
