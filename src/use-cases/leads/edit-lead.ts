@@ -9,7 +9,7 @@ import { WorkspaceNotFoundError } from "./errors/workspace-not-found-error";
 
 interface EditLeadUseCaseRequest {
 	cellphone?: string;
-	email?: string;
+	email?: string | null;
 	lawyerId?: string | null;
 	leadId: string;
 	name?: string;

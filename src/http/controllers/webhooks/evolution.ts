@@ -15,6 +15,11 @@ import { AgentResponseError } from "@/providers/agents/errors/agent-response-err
 import { WorkspaceNotConfiguredError } from "@/use-cases/agents/errors/workspace-not-configured-error";
 import { ScreeningFlowNotMatchedError } from "@/use-cases/agents/errors/screening-flow-not-matched-error";
 import { ScreeningFlowNotFoundError } from "@/use-cases/ai-session/errors/screening-flow-not-found-error";
+import { makeCreateLeadUseCase } from "@/use-cases/leads/factories/make-create-lead-use-case";
+import { makeGetWorkspaceUseCase } from "@/use-cases/workspaces/factories/make-get-workspace-use-case";
+import { makeFetchWorkspacesUseCase } from "@/use-cases/workspaces/factories/make-fetch-workspaces-use-case";
+import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
+import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 	app,
 ) => {
@@ -77,7 +82,7 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 					.status(HTTP_STATUS.OK)
 					.send({ received: true });
 			}
-
+			//acho que tem fazer um use case com esse comecinho, acho que o controller ta mto grande
 			const phoneNumber = extractPhoneNumber(payload.data.key.remoteJid);
 			const contactName = payload.data.pushName ?? "";
 			const chatId = payload.data.key.remoteJid;
@@ -113,6 +118,44 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 				}
 
 				activeSession = createResult.value.aiSession;
+
+				const createLead = makeCreateLeadUseCase();
+
+				const getWorkspace = makeFetchWorkspacesUseCase();
+
+				const workspace = await getWorkspace.execute({page : 1});
+
+				if(workspace.isLeft()){
+					return reply.status(HTTP_STATUS.NOT_FOUND).send({
+						message: workspace.value.message,
+					});
+				}
+
+				const createLeadResult = await createLead.execute({
+					workspaceId: workspace.value.results[0].id,
+					name: contactName,
+					cellphone: phoneNumber,
+				})
+
+				if(createLeadResult.isLeft()) {
+					const error = createLeadResult.value;
+					
+					switch (error.constructor) {
+						case WorkspaceNotFoundError:
+							return reply.status(HTTP_STATUS.NOT_FOUND).send({
+								message: error.message,
+							});
+						case LawyerNotFoundError:
+							return reply.status(HTTP_STATUS.NOT_FOUND).send({
+								message: error.message,
+							});
+						default:
+							return reply.status(HTTP_STATUS.BAD_REQUEST).send({
+								message: "An unexpected error occurred.",
+							});
+					}
+				}
+
 			} else {
 				activeSession = getSessionResult.value.aiSession;
 			}

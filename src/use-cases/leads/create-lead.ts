@@ -8,7 +8,7 @@ import { WorkspaceNotFoundError } from "./errors/workspace-not-found-error";
 
 interface CreateLeadUseCaseRequest {
 	cellphone: string;
-	email: string;
+	email?: string | null;
 	lawyerId?: string;
 	name: string;
 	status?: LeadStatus;
