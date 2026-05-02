@@ -55,6 +55,10 @@ model Lawyer {
   userId      String   @unique @map("user_id")
   workspaceId String   @map("workspace_id")
   cellphone   String
+  name        String
+  oab         String
+  oabState    String   @map("oab_state")
+  pix         String   @map("pix_advogado")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
