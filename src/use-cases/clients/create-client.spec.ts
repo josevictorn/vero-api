@@ -75,6 +75,10 @@ describe("Create Client Use Case", () => {
 			userId: "user-1",
 			workspaceId: workspace.id,
 			cellphone: "84999999999",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({

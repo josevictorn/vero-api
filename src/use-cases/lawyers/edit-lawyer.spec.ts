@@ -43,6 +43,10 @@ describe("Edit Lawyer Use Case", () => {
 			userId: user.id,
 			workspaceId: workspace.id,
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
@@ -82,6 +86,10 @@ describe("Edit Lawyer Use Case", () => {
 			userId: "user-1",
 			workspaceId: workspace1.id,
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
@@ -111,6 +119,10 @@ describe("Edit Lawyer Use Case", () => {
 			userId: "user-1",
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
@@ -127,6 +139,10 @@ describe("Edit Lawyer Use Case", () => {
 			userId: "user-1",
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
@@ -155,12 +171,20 @@ describe("Edit Lawyer Use Case", () => {
 			userId: user1.id,
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const lawyer2 = await lawyersRepository.create({
 			userId: user2.id,
 			workspaceId: "workspace-1",
 			cellphone: "11999996666",
+			name: "Maria Santos",
+			oab: "OAB12346",
+			oabState: "SP",
+			pix: "otherpix@example.com",
 		});
 
 		const result = await sut.execute({

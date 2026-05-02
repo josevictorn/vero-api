@@ -66,6 +66,10 @@ describe("Edit Client Use Case", () => {
 			userId: "user-1",
 			workspaceId: newWorkspace.id,
 			cellphone: "84933333333",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
@@ -216,6 +220,10 @@ describe("Edit Client Use Case", () => {
 			userId: "user-1",
 			workspaceId: workspace.id,
 			cellphone: "84933333333",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const client = await clientsRepository.create({
@@ -251,6 +259,10 @@ describe("Edit Client Use Case", () => {
 			userId: "user-1",
 			workspaceId: workspace.id,
 			cellphone: "84933333333",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const client = await clientsRepository.create({

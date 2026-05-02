@@ -42,6 +42,9 @@ describe("Create Lawyer Use Case", () => {
 			userId: user.id,
 			workspaceId: workspace.id,
 			cellphone: "11999997777",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		expect(result.isRight()).toBe(true);
@@ -69,6 +72,9 @@ describe("Create Lawyer Use Case", () => {
 			userId: "non-existing-user",
 			workspaceId: workspace.id,
 			cellphone: "11999997777",
+			oab: "OAB000",
+			oabState: "SP",
+			pix: "pix@x.com",
 		});
 
 		expect(result.isLeft()).toBe(true);
@@ -86,6 +92,9 @@ describe("Create Lawyer Use Case", () => {
 			userId: user.id,
 			workspaceId: "non-existing-workspace",
 			cellphone: "11999997777",
+			oab: "OAB000",
+			oabState: "SP",
+			pix: "pix@x.com",
 		});
 
 		expect(result.isLeft()).toBe(true);
@@ -110,12 +119,18 @@ describe("Create Lawyer Use Case", () => {
 			userId: user.id,
 			workspaceId: workspace.id,
 			cellphone: "11999997777",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({
 			userId: user.id,
 			workspaceId: workspace.id,
 			cellphone: "11999996666",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		expect(result.isLeft()).toBe(true);

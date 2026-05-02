@@ -8,9 +8,12 @@ import { UserNotFoundError } from "./errors/user-not-found-error";
 import { WorkspaceNotFoundError } from "./errors/workspace-not-found-error";
 
 interface CreateLawyerUseCaseRequest {
+	cellphone: string;
+	oab: string;
+	oabState: string;
+	pix: string;
 	userId: string;
 	workspaceId: string;
-	cellphone: string;
 }
 
 type CreateLawyerUseCaseResponse = Either<
@@ -29,6 +32,9 @@ export class CreateLawyerUseCase {
 		userId,
 		workspaceId,
 		cellphone,
+		oab,
+		oabState,
+		pix,
 	}: CreateLawyerUseCaseRequest): Promise<CreateLawyerUseCaseResponse> {
 		const user = await this.usersRepository.findById(userId);
 
@@ -52,6 +58,10 @@ export class CreateLawyerUseCase {
 			userId,
 			workspaceId,
 			cellphone,
+			name: user.name,
+			oab,
+			oabState,
+			pix,
 		});
 
 		return right({

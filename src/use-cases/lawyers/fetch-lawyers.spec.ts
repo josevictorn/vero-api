@@ -17,12 +17,20 @@ describe("Fetch Lawyers Use Case", () => {
 			userId: "user-1",
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const lawyer2 = await lawyersRepository.create({
 			userId: "user-2",
 			workspaceId: "workspace-1",
 			cellphone: "11999996666",
+			name: "João Silva",
+			oab: "OAB12378",
+			oabState: "SP",
+			pix: "pix2@example.com",
 		});
 
 		const result = await sut.execute({ page: 1 });
