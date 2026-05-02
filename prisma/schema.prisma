@@ -90,8 +90,19 @@ model Lead {
 model Client {
   id        String @id @default(uuid())
   name      String
+  maritalStatus String @map("marital_status")
+  profession String
+  rg        String
+  issuingAgency String @map("issuing_agency")
+  cpf       String
+  street    String
+  neighborhood String
+  city      String
+  state     String
+  zipCode   String @map("zip_code")
   email     String
   cellphone String
+  
 
   workspaceId       String  @map("workspace_id")
   lawyerId          String? @map("lawyer_id")
