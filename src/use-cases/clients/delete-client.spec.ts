@@ -1,10 +1,23 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { DeleteClientUseCase } from "./delete-client";
+import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryClientsRepository } from "@/repositories/in-memory/in-memory-clients-repository";
+import { DeleteClientUseCase } from "./delete-client";
 import { ClientNotFoundError } from "./errors/client-not-found-error";
 
 let clientsRepository: InMemoryClientsRepository;
 let sut: DeleteClientUseCase;
+
+const baseClientData = {
+	maritalStatus: "single",
+	profession: "engineer",
+	rg: "1234567",
+	issuingAgency: "ssp",
+	cpf: "12345678901",
+	street: "Main St",
+	neighborhood: "Downtown",
+	city: "Natal",
+	state: "RN",
+	zipCode: "59000000",
+};
 
 describe("Delete Client Use Case", () => {
 	beforeEach(() => {
@@ -17,6 +30,7 @@ describe("Delete Client Use Case", () => {
 			name: "João",
 			email: "joao@test.com",
 			cellphone: "84999999999",
+			...baseClientData,
 			workspaceId: "workspace-1",
 			lawyerId: null,
 		});

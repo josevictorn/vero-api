@@ -1,61 +1,90 @@
-import { ClientsRepository } from "@/repositories/clients-repository";
-import { WorkspacesRepository } from "@/repositories/workspaces-repository";
+import type { Client } from "@generated/prisma/client";
+import type { ClientsRepository } from "@/repositories/clients-repository";
+import type { LawyersRepository } from "@/repositories/lawyers-repository";
+import type { WorkspacesRepository } from "@/repositories/workspaces-repository";
 import { type Either, left, right } from "@/utils/either";
-import { Client } from "@generated/prisma/client";
-import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error";
 import { LawyerNotFoundError } from "../leads/errors/lawyer-not-found-error";
-import {UsersRepository} from "@/repositories/users-repository";
+import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error";
 
 interface CreateClientUseCaseRequest {
-  name: string;
-  email: string;
-  cellphone: string;
-  workspaceId: string;
-  lawyerId?: string | null;
+	cellphone: string;
+	city: string;
+	cpf: string;
+	email: string;
+	issuingAgency: string;
+	lawyerId?: string | null;
+	maritalStatus: string;
+	name: string;
+	neighborhood: string;
+	profession: string;
+	rg: string;
+	state: string;
+	street: string;
+	workspaceId: string;
+	zipCode: string;
 }
 
 type CreateClientUseCaseResponse = Either<
-    WorkspaceNotFoundError | LawyerNotFoundError, 
-    { client: Client }
+	WorkspaceNotFoundError | LawyerNotFoundError,
+	{ client: Client }
 >;
 
 export class CreateClientUseCase {
-  constructor(
-      private readonly clientsRepository: ClientsRepository,
-      private readonly workspacesRepository: WorkspacesRepository,
-      private readonly usersRepository: UsersRepository,
-  ) {}
+	constructor(
+		private readonly clientsRepository: ClientsRepository,
+		private readonly workspacesRepository: WorkspacesRepository,
+		private readonly lawyersRepository: LawyersRepository
+	) {}
 
-  async execute({
-      name,
-      email,
-      cellphone,
-      workspaceId,
-      lawyerId
-  }: CreateClientUseCaseRequest): Promise<CreateClientUseCaseResponse> {
+	async execute({
+		name,
+		email,
+		cellphone,
+		maritalStatus,
+		profession,
+		rg,
+		issuingAgency,
+		cpf,
+		street,
+		neighborhood,
+		city,
+		state,
+		zipCode,
+		workspaceId,
+		lawyerId,
+	}: CreateClientUseCaseRequest): Promise<CreateClientUseCaseResponse> {
+		const workspace = await this.workspacesRepository.findById(workspaceId);
 
-     const workspace = await this.workspacesRepository.findById(workspaceId);
+		if (!workspace) {
+			return left(new WorkspaceNotFoundError(workspaceId));
+		}
 
-     if (!workspace) {
-         return left(new WorkspaceNotFoundError(workspaceId));
-     }
+		if (lawyerId !== undefined && lawyerId !== null) {
+			const lawyer = await this.lawyersRepository.findById(lawyerId);
 
-     if (lawyerId !== undefined && lawyerId !== null) {
-         const lawyer = await this.usersRepository.findById(lawyerId);
+			if (!lawyer) {
+				return left(new LawyerNotFoundError(lawyerId));
+			}
+		}
 
-         if (!lawyer) {
-             return left(new LawyerNotFoundError(lawyerId));
-         }
-     }
+		const client = await this.clientsRepository.create({
+			name,
+			email,
+			cellphone,
+			maritalStatus,
+			profession,
+			rg,
+			issuingAgency,
+			cpf,
+			street,
+			neighborhood,
+			city,
+			state,
+			zipCode,
+			workspaceId,
+			lawyerId,
+		});
 
-     const client = await this.clientsRepository.create({
-         name,
-         email,
-         cellphone,
-         workspaceId,
-         lawyerId
-     })
-
-     return right({ client });
-  }
+		return right({ client });
+	}
 }

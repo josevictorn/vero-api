@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { ConvertLeadToClientUseCase } from "./convert-lead-to-client";
-import { InMemoryLeadsRepository } from "@/repositories/in-memory/in-memory-leads-repository";
+import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryClientsRepository } from "@/repositories/in-memory/in-memory-clients-repository";
+import { InMemoryLeadsRepository } from "@/repositories/in-memory/in-memory-leads-repository";
 import { InMemoryWorkspacesRepository } from "@/repositories/in-memory/in-memory-workspaces-repository";
 import { LeadNotFoundError } from "../leads/errors/lead-not-found-error";
 import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error";
+import { ConvertLeadToClientUseCase } from "./convert-lead-to-client";
 import { LeadAlreadyConvertedError } from "./errors/lead-already-converted-error";
 
 let leadsRepository: InMemoryLeadsRepository;
@@ -12,6 +12,19 @@ let clientsRepository: InMemoryClientsRepository;
 let workspacesRepository: InMemoryWorkspacesRepository;
 
 let sut: ConvertLeadToClientUseCase;
+
+const baseClientData = {
+	maritalStatus: "single",
+	profession: "engineer",
+	rg: "1234567",
+	issuingAgency: "ssp",
+	cpf: "12345678901",
+	street: "Main St",
+	neighborhood: "Downtown",
+	city: "Natal",
+	state: "RN",
+	zipCode: "59000000",
+};
 
 describe("Convert Lead To Client Use Case", () => {
 	beforeEach(() => {
@@ -44,6 +57,7 @@ describe("Convert Lead To Client Use Case", () => {
 
 		const result = await sut.execute({
 			leadId: lead.id,
+			...baseClientData,
 		});
 
 		expect(result.isRight()).toBe(true);
@@ -57,6 +71,7 @@ describe("Convert Lead To Client Use Case", () => {
 	it("should not convert if lead does not exist", async () => {
 		const result = await sut.execute({
 			leadId: "non-existing-id",
+			...baseClientData,
 		});
 
 		expect(result.isLeft()).toBe(true);
@@ -74,6 +89,7 @@ describe("Convert Lead To Client Use Case", () => {
 
 		const result = await sut.execute({
 			leadId: lead.id,
+			...baseClientData,
 		});
 
 		expect(result.isLeft()).toBe(true);
@@ -100,6 +116,7 @@ describe("Convert Lead To Client Use Case", () => {
 			name: lead.name,
 			email: lead.email,
 			cellphone: lead.cellphone,
+			...baseClientData,
 			workspaceId: lead.workspaceId,
 			lawyerId: null,
 			createdFromLeadId: lead.id,
@@ -107,6 +124,7 @@ describe("Convert Lead To Client Use Case", () => {
 
 		const result = await sut.execute({
 			leadId: lead.id,
+			...baseClientData,
 		});
 
 		expect(result.isLeft()).toBe(true);

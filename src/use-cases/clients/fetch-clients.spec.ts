@@ -1,11 +1,29 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { FetchClientsUseCase } from "./fetch-clients";
+import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryClientsRepository } from "@/repositories/in-memory/in-memory-clients-repository";
-import { InvalidPageError } from "../users/errors/invalid-page-error";
 import { ITEM_PER_PAGE } from "@/utils/constants";
+import { InvalidPageError } from "../users/errors/invalid-page-error";
+import { FetchClientsUseCase } from "./fetch-clients";
 
 let clientsRepository: InMemoryClientsRepository;
 let sut: FetchClientsUseCase;
+
+const baseClientData = {
+	maritalStatus: "single",
+	profession: "engineer",
+	rg: "1234567",
+	issuingAgency: "ssp",
+	cpf: "12345678901",
+	street: "Main St",
+	neighborhood: "Downtown",
+	city: "Natal",
+	state: "RN",
+	zipCode: "59000000",
+};
+
+const FIRST_PAGE_CLIENTS_COUNT = 5;
+const EXTRA_CLIENTS_COUNT = 3;
+const SMALL_LIST_COUNT = 3;
+const TOTAL_CLIENTS_COUNT = 10;
 
 describe("Fetch Clients Use Case", () => {
 	beforeEach(() => {
@@ -13,13 +31,13 @@ describe("Fetch Clients Use Case", () => {
 		sut = new FetchClientsUseCase(clientsRepository);
 	});
 
-
 	it("should be able to fetch first page of clients", async () => {
-		for (let i = 0; i < 5; i++) {
+		for (let i = 0; i < FIRST_PAGE_CLIENTS_COUNT; i++) {
 			await clientsRepository.create({
 				name: `Client ${i}`,
 				email: `client${i}@test.com`,
 				cellphone: "84999999999",
+				...baseClientData,
 				workspaceId: "workspace-1",
 				lawyerId: null,
 			});
@@ -30,19 +48,21 @@ describe("Fetch Clients Use Case", () => {
 		expect(result.isRight()).toBe(true);
 
 		if (result.isRight()) {
-			expect(result.value.results.length).toBe(5);
+			expect(result.value.results.length).toBe(FIRST_PAGE_CLIENTS_COUNT);
 			expect(result.value.meta.currentPage).toBe(1);
-			expect(result.value.meta.totalCount).toBe(5);
+			expect(result.value.meta.totalCount).toBe(FIRST_PAGE_CLIENTS_COUNT);
 			expect(result.value.meta.perPage).toBe(ITEM_PER_PAGE);
 		}
 	});
 
 	it("should respect pagination (multiple pages)", async () => {
-		for (let i = 0; i < ITEM_PER_PAGE + 3; i++) {
+		const totalWithExtra = ITEM_PER_PAGE + EXTRA_CLIENTS_COUNT;
+		for (let i = 0; i < totalWithExtra; i++) {
 			await clientsRepository.create({
 				name: `Client ${i}`,
 				email: `client${i}@test.com`,
 				cellphone: "84999999999",
+				...baseClientData,
 				workspaceId: "workspace-1",
 				lawyerId: null,
 			});
@@ -53,18 +73,19 @@ describe("Fetch Clients Use Case", () => {
 		expect(result.isRight()).toBe(true);
 
 		if (result.isRight()) {
-			expect(result.value.results.length).toBe(3); // sobra da página
+			expect(result.value.results.length).toBe(EXTRA_CLIENTS_COUNT); // sobra da página
 			expect(result.value.meta.currentPage).toBe(2);
-			expect(result.value.meta.totalCount).toBe(ITEM_PER_PAGE + 3);
+			expect(result.value.meta.totalCount).toBe(totalWithExtra);
 		}
 	});
 
 	it("should return empty list if page is out of range", async () => {
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < SMALL_LIST_COUNT; i++) {
 			await clientsRepository.create({
 				name: `Client ${i}`,
 				email: `client${i}@test.com`,
 				cellphone: "84999999999",
+				...baseClientData,
 				workspaceId: "workspace-1",
 				lawyerId: null,
 			});
@@ -76,16 +97,17 @@ describe("Fetch Clients Use Case", () => {
 
 		if (result.isRight()) {
 			expect(result.value.results).toHaveLength(0);
-			expect(result.value.meta.totalCount).toBe(3);
+			expect(result.value.meta.totalCount).toBe(SMALL_LIST_COUNT);
 		}
 	});
 
 	it("should return correct totalCount independent of page", async () => {
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < TOTAL_CLIENTS_COUNT; i++) {
 			await clientsRepository.create({
 				name: `Client ${i}`,
 				email: `client${i}@test.com`,
 				cellphone: "84999999999",
+				...baseClientData,
 				workspaceId: "workspace-1",
 				lawyerId: null,
 			});
@@ -98,11 +120,10 @@ describe("Fetch Clients Use Case", () => {
 		expect(resultPage2.isRight()).toBe(true);
 
 		if (resultPage1.isRight() && resultPage2.isRight()) {
-			expect(resultPage1.value.meta.totalCount).toBe(10);
-			expect(resultPage2.value.meta.totalCount).toBe(10);
+			expect(resultPage1.value.meta.totalCount).toBe(TOTAL_CLIENTS_COUNT);
+			expect(resultPage2.value.meta.totalCount).toBe(TOTAL_CLIENTS_COUNT);
 		}
 	});
-
 
 	it("should not be able to fetch with page less than 1", async () => {
 		const result = await sut.execute({ page: 0 });
