@@ -4,6 +4,7 @@ import { CreateClientController } from "./create";
 import { DeleteClientController } from "./delete";
 import { EditClientController } from "./edit";
 import { FetchClientsController } from "./fetch";
+import { GenerateContractController } from "./generate-contract";
 import { GetClientController } from "./get";
 
 export async function clientsRoutes(app: FastifyInstance) {
@@ -13,4 +14,5 @@ export async function clientsRoutes(app: FastifyInstance) {
 	await app.register(EditClientController);
 	await app.register(DeleteClientController);
 	await app.register(FetchClientsController);
+	await app.register(GenerateContractController);
 }
