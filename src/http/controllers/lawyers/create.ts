@@ -21,6 +21,9 @@ export const CreateLawyerController: FastifyPluginAsyncZod = async (app) => {
 					userId: z.uuid(),
 					workspaceId: z.uuid(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH),
+					oab: z.string(),
+					oabState: z.string(),
+					pix: z.string(),
 				}),
 				response: {
 					201: z.object({ lawyerId: z.uuid() }),
@@ -43,13 +46,17 @@ export const CreateLawyerController: FastifyPluginAsyncZod = async (app) => {
 			},
 		},
 		async (request, reply) => {
-			const { userId, workspaceId, cellphone } = request.body;
+			const { userId, workspaceId, cellphone, oab, oabState, pix } =
+				request.body;
 			const createLawyerUseCase = makeCreateLawyerUseCase();
 
 			const result = await createLawyerUseCase.execute({
 				userId,
 				workspaceId,
 				cellphone,
+				oab,
+				oabState,
+				pix,
 			});
 
 			if (result.isLeft()) {
