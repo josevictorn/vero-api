@@ -32,6 +32,7 @@ export class InMemoryAiSessionRepository implements AiSessionRepository {
 		const aiSession: AiSession = {
 			id: randomUUID(),
 			screeningFlowId: data.screeningFlowId ?? null,
+			leadId: data.leadId ?? null,
 			chatId: data.chatId,
 			status: data.status ?? AiSessionStatus.IDENTIFYING,
 			chatState: data.chatState as AiSession["chatState"],

@@ -107,6 +107,7 @@ model ScreeningFlow {
 model AiSession {
   id              String   @id @default(uuid())
   screeningFlowId String?  @map("screening_flow_id")
+  leadId          String?  @map("lead_id")
   chatId          String   @map("chat_id")
   status          AiSessionStatus @default(IDENTIFYING)
   chatState       Json     @map("chat_state")
