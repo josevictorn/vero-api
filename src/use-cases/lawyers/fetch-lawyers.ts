@@ -1,17 +1,27 @@
 import type { Lawyer } from "@generated/prisma/client";
 import type { LawyersRepository } from "@/repositories/lawyers-repository";
+import type { UsersRepository } from "@/repositories/users-repository";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import { type Either, left, right } from "@/utils/either";
 import { InvalidPageError } from "./errors/invalid-page-error";
+import { UserNotFoundError } from "./errors/user-not-found-error";
 
 interface FetchLawyersUseCaseRequest {
 	page: number;
 }
 
+interface FetchLawyerItem {
+	lawyer: Lawyer;
+	user: {
+		name: string;
+		email: string;
+	};
+}
+
 type FetchLawyersUseCaseResponse = Either<
-	InvalidPageError,
+	InvalidPageError | UserNotFoundError,
 	{
-		results: Lawyer[];
+		results: FetchLawyerItem[];
 		meta: {
 			currentPage: number;
 			totalCount: number;
@@ -21,7 +31,10 @@ type FetchLawyersUseCaseResponse = Either<
 >;
 
 export class FetchLawyersUseCase {
-	constructor(private readonly lawyersRepository: LawyersRepository) {}
+	constructor(
+		private readonly lawyersRepository: LawyersRepository,
+		private readonly usersRepository: UsersRepository
+	) {}
 
 	async execute({
 		page,
@@ -32,8 +45,26 @@ export class FetchLawyersUseCase {
 
 		const lawyers = await this.lawyersRepository.findMany({ page });
 
+		const results: FetchLawyerItem[] = [];
+
+		for (const lawyer of lawyers.items) {
+			const user = await this.usersRepository.findById(lawyer.userId);
+
+			if (!user) {
+				return left(new UserNotFoundError(lawyer.userId));
+			}
+
+			results.push({
+				lawyer,
+				user: {
+					name: user.name,
+					email: user.email,
+				},
+			});
+		}
+
 		return right({
-			results: lawyers.items,
+			results,
 			meta: {
 				currentPage: page,
 				totalCount: lawyers.total,

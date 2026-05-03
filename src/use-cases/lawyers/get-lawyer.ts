@@ -1,16 +1,30 @@
 import type { Lawyer } from "@generated/prisma/client";
 import type { LawyersRepository } from "@/repositories/lawyers-repository";
+import type { UsersRepository } from "@/repositories/users-repository";
 import { type Either, left, right } from "@/utils/either";
 import { LawyerNotFoundError } from "./errors/lawyer-not-found-error";
+import { UserNotFoundError } from "./errors/user-not-found-error";
 
 interface GetLawyerUseCaseRequest {
 	lawyerId: string;
 }
 
-type GetLawyerUseCaseResponse = Either<LawyerNotFoundError, { lawyer: Lawyer }>;
+type GetLawyerUseCaseResponse = Either<
+	LawyerNotFoundError | UserNotFoundError,
+	{
+		lawyer: Lawyer;
+		user: {
+			name: string;
+			email: string;
+		};
+	}
+>;
 
 export class GetLawyerUseCase {
-	constructor(private readonly lawyersRepository: LawyersRepository) {}
+	constructor(
+		private readonly lawyersRepository: LawyersRepository,
+		private readonly usersRepository: UsersRepository
+	) {}
 
 	async execute({
 		lawyerId,
@@ -21,8 +35,18 @@ export class GetLawyerUseCase {
 			return left(new LawyerNotFoundError(lawyerId));
 		}
 
+		const user = await this.usersRepository.findById(lawyer.userId);
+
+		if (!user) {
+			return left(new UserNotFoundError(lawyer.userId));
+		}
+
 		return right({
 			lawyer,
+			user: {
+				name: user.name,
+				email: user.email,
+			},
 		});
 	}
 }
