@@ -4,7 +4,7 @@ import { AgentResponseError } from "@/providers/agents/errors/agent-response-err
 import type { AiSessionRepository } from "@/repositories/ai-session-repository";
 import type { CaseAnalysisRepository } from "@/repositories/case-analysis-repository";
 import { type Either, left, right } from "@/utils/either";
-import { AiSession, CaseAnalysis } from "@generated/prisma/client";
+import type { AiSession, CaseAnalysis } from "@generated/prisma/client";
 
 interface ProcessMessageCaseAnalyzerAgentRequest {
 	aiSession: AiSession;
@@ -14,9 +14,10 @@ interface ProcessMessageCaseAnalyzerAgentRequest {
 	today: string;
 }
 
-interface ProcessMessageCaseAnalyzerAgentResponse {
-	caseAnalysis: CaseAnalysis;
-}
+type ProcessMessageCaseAnalyzerAgentResponse = Either<
+	AgentResponseError,
+	{ caseAnalysis: CaseAnalysis }
+>;
 
 export class ProcessMessageCaseAnalyzerAgentUseCase {
 	constructor(
@@ -30,9 +31,7 @@ export class ProcessMessageCaseAnalyzerAgentUseCase {
 		clientName,
 		collectedData,
 		today,
-	}: ProcessMessageCaseAnalyzerAgentRequest): Promise<
-		Either<AgentResponseError, ProcessMessageCaseAnalyzerAgentResponse>
-	> {
+	}: ProcessMessageCaseAnalyzerAgentRequest): Promise<ProcessMessageCaseAnalyzerAgentResponse> {
 		const agentResult = await this.caseAnalyzerAgent.analyze({
 			clientName,
 			collectedData,

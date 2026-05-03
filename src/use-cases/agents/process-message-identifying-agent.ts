@@ -16,15 +16,10 @@ interface ProcessMessageIdentifyingAgentRequest {
 	messageText: string;
 }
 
-interface ProcessMessageIdentifyingAgentResponse {
-	messageToClient: string;
-	identified: boolean;
-}
-
-type ProcessMessageIdentifyingAgentErrors =
-	| AgentResponseError
-	| WorkspaceNotConfiguredError
-	| ScreeningFlowNotMatchedError;
+type ProcessMessageIdentifyingAgentResponse = Either<
+	AgentResponseError | WorkspaceNotConfiguredError | ScreeningFlowNotMatchedError,
+	{ messageToClient: string; identified: boolean }
+>;
 
 const NOT_IDENTIFIED = "nao_identificado";
 
@@ -44,12 +39,7 @@ export class ProcessMessageIdentifyingAgentUseCase {
 	async execute({
 		aiSession,
 		messageText,
-	}: ProcessMessageIdentifyingAgentRequest): Promise<
-		Either<
-			ProcessMessageIdentifyingAgentErrors,
-			ProcessMessageIdentifyingAgentResponse
-		>
-	> {
+	}: ProcessMessageIdentifyingAgentRequest): Promise<ProcessMessageIdentifyingAgentResponse> {
 		const workspace = await this.workspacesRepository.findFirst();
 
 		if (!workspace) {
