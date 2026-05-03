@@ -6,20 +6,15 @@ import {
 	extractPhoneNumber,
 	type EvolutionWebhookPayload,
 } from "@/providers/evolution/evolution-types";
-import { makeGetAiSessionByChatIdUseCase } from "@/use-cases/ai-session/factories/make-get-ai-session-by-chat-id-use-case";
-import { makeCreateAiSessionUseCase } from "@/use-cases/ai-session/factories/make-create-ai-session-use-case";
-import { makeProcessMessageIdentifyingAgentUseCase } from "@/use-cases/agents/factories/make-process-message-identifying-agent";
 import { sendTextMessage } from "@/lib/evolution";
-import { AiSessionStatus } from "@generated/prisma/enums";
 import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
 import { WorkspaceNotConfiguredError } from "@/use-cases/agents/errors/workspace-not-configured-error";
 import { ScreeningFlowNotMatchedError } from "@/use-cases/agents/errors/screening-flow-not-matched-error";
 import { ScreeningFlowNotFoundError } from "@/use-cases/ai-session/errors/screening-flow-not-found-error";
-import { makeCreateLeadUseCase } from "@/use-cases/leads/factories/make-create-lead-use-case";
-import { makeGetWorkspaceUseCase } from "@/use-cases/workspaces/factories/make-get-workspace-use-case";
-import { makeFetchWorkspacesUseCase } from "@/use-cases/workspaces/factories/make-fetch-workspaces-use-case";
-import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
 import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
+import { makeHandleIncomingMessageUseCase } from "@/use-cases/orchestrator/factories/make-handle-incoming-message-use-case";
+import { makeRouteMessageUseCase } from "@/use-cases/orchestrator/factories/make-route-message-use-case";
+
 export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 	app,
 ) => {
@@ -57,156 +52,93 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 					500: z
 						.object({ message: z.string() })
 						.describe("Internal server error."),
+					502: z
+						.object({ message: z.string() })
+						.describe("Bad gateway."),
 				},
 			},
 		},
 		async (request, reply) => {
 			const payload = request.body as EvolutionWebhookPayload;
 
-			if (payload.event !== "messages.upsert") {
-				return reply
-					.status(HTTP_STATUS.OK)
-					.send({ received: true });
-			}
-
-			if (payload.data.key.fromMe) {
+			if (payload.event !== "messages.upsert" || payload.data.key.fromMe) {
 				return reply
 					.status(HTTP_STATUS.OK)
 					.send({ received: true });
 			}
 
 			const messageText = extractMessageText(payload);
-
 			if (!messageText) {
 				return reply
 					.status(HTTP_STATUS.OK)
 					.send({ received: true });
 			}
-			//acho que tem fazer um use case com esse comecinho, acho que o controller ta mto grande
+
 			const phoneNumber = extractPhoneNumber(payload.data.key.remoteJid);
 			const contactName = payload.data.pushName ?? "";
 			const chatId = payload.data.key.remoteJid;
+			
+			const handleIncomingMessageUseCase = makeHandleIncomingMessageUseCase();
 
-			const getAiSessionByChatIdUseCase = makeGetAiSessionByChatIdUseCase();
+			const activeSessionResult = await handleIncomingMessageUseCase.execute({
+				phoneNumber,
+				contactName,
+				chatId
+			})
 
-			const getSessionResult = await getAiSessionByChatIdUseCase.execute({ aiSessionChatId: chatId });
+			if(activeSessionResult.isLeft()){
+				const error = activeSessionResult.value;
 
-			let activeSession;
-
-			if (getSessionResult.isLeft() || getSessionResult.value.aiSession.status === AiSessionStatus.BOOKED) {
-				const createAiSessionUseCase = makeCreateAiSessionUseCase();
-				const createResult = await createAiSessionUseCase.execute({
-					cellphone: phoneNumber,
-					chatId: chatId,
-					name: contactName,
-					chatState: {}
-				});
-
-				if (createResult.isLeft()) {
-					const error = createResult.value;
-
-					switch (error.constructor) {
-						case ScreeningFlowNotFoundError:
-							return reply.status(HTTP_STATUS.NOT_FOUND).send({
-								message: error.message,
-							});
-						default:
-							return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
-								message: "An unexpected error occurred.",
-							});
-					}
+				switch(error.constructor) {
+					case WorkspaceNotFoundError:
+					case WorkspaceNotConfiguredError:
+					case ScreeningFlowNotFoundError:
+					case ScreeningFlowNotMatchedError:
+						return reply.status(HTTP_STATUS.NOT_FOUND).send({
+							message: error.message,
+						});
+					default:
+						console.error("Erro inesperado no Webhook:", error);
+						return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+							message: "An unexpected error occurred.",
+						});
 				}
-
-				activeSession = createResult.value.aiSession;
-
-				const createLead = makeCreateLeadUseCase();
-
-				const getWorkspace = makeFetchWorkspacesUseCase();
-
-				const workspace = await getWorkspace.execute({page : 1});
-
-				if(workspace.isLeft()){
-					return reply.status(HTTP_STATUS.NOT_FOUND).send({
-						message: workspace.value.message,
-					});
-				}
-
-				const createLeadResult = await createLead.execute({
-					workspaceId: workspace.value.results[0].id,
-					name: contactName,
-					cellphone: phoneNumber,
-				})
-
-				if(createLeadResult.isLeft()) {
-					const error = createLeadResult.value;
-					
-					switch (error.constructor) {
-						case WorkspaceNotFoundError:
-							return reply.status(HTTP_STATUS.NOT_FOUND).send({
-								message: error.message,
-							});
-						case LawyerNotFoundError:
-							return reply.status(HTTP_STATUS.NOT_FOUND).send({
-								message: error.message,
-							});
-						default:
-							return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-								message: "An unexpected error occurred.",
-							});
-					}
-				}
-
-			} else {
-				activeSession = getSessionResult.value.aiSession;
 			}
 
-			switch (activeSession.status) {
-				case AiSessionStatus.IDENTIFYING: {
-					const identifyingUseCase = makeProcessMessageIdentifyingAgentUseCase();
-					const result = await identifyingUseCase.execute({
-						aiSession: activeSession,
-						messageText,
-					});
+			const activeSession = activeSessionResult.value.aiSession;
 
-					if (result.isLeft()) {
-						const error = result.value;
+			const routeMessageUseCase = makeRouteMessageUseCase()
+			const routeMessageResult = await routeMessageUseCase.execute({
+				aiSession: activeSession,
+				messageText: messageText
+			})
 
-						switch (error.constructor) {
-							case WorkspaceNotConfiguredError:
-								return reply.status(HTTP_STATUS.NOT_FOUND).send({
-									message: error.message,
-								});
-							case ScreeningFlowNotMatchedError:
-								return reply.status(HTTP_STATUS.NOT_FOUND).send({
-									message: error.message,
-								});
-							case AgentResponseError:
-								return reply.status(HTTP_STATUS.BAD_REQUEST).send({
-									message: error.message,
-								});
-							default:
-								return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
-									message: "An unexpected error occurred.",
-								});
-						}
-					}
+			if(routeMessageResult.isLeft()) {
+				const error = routeMessageResult.value;
 
-					console.log(result.value.messageToClient);
-
-					await sendTextMessage({
-						to: chatId,
-						text: result.value.messageToClient,
-					});
-					break;
+				switch(error.constructor) {
+					case WorkspaceNotConfiguredError:
+					case ScreeningFlowNotMatchedError:
+						return reply.status(HTTP_STATUS.NOT_FOUND).send({
+							message: error.message,
+						});
+					case AgentResponseError:
+						return reply.status(HTTP_STATUS.BAD_GATEWAY).send({
+							message: error.message,
+						});
+					default:
+						return reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
+							message: "An unexpected error occurred.",
+						});
 				}
-				case AiSessionStatus.INTERVIEWING:
-					break;
-				case AiSessionStatus.FORWARDED:
-					break;
-				case AiSessionStatus.BOOKING:
-					break;
-				case AiSessionStatus.BOOKED:
-					break;
+			}
+
+			if(routeMessageResult.value.messageToClient && routeMessageResult.value.messageToClient !== "") {
+				console.log("Message to client: ", routeMessageResult.value.messageToClient);
+				await sendTextMessage({
+					to: chatId,
+					text: routeMessageResult.value.messageToClient,
+				});
 			}
 
 			return reply
