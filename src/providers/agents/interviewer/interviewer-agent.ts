@@ -8,7 +8,7 @@ export interface InterviewerAgentInput {
 	isThirdParty: boolean;
 	clientName: string;
 	caseCategory: string;
-	questions: string[];
+	questions: Record<string, string>;
 	collectedData: CollectedDataItem[];
 	today: string;
 	chatHistory?: ChatMessage[];
