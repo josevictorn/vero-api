@@ -1,13 +1,15 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { LeadNotFoundError } from "@/use-cases/leads/errors/lead-not-found-error";
 import { LeadAlreadyConvertedError } from "@/use-cases/clients/errors/lead-already-converted-error";
+import { makeConvertLeadToClientUseCase } from "@/use-cases/clients/factories/make-convert-lead-to-client-use-case";
+import { LeadNotFoundError } from "@/use-cases/leads/errors/lead-not-found-error";
 import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
-import {makeConvertLeadToClientUseCase} from "@/use-cases/clients/factories/make-convert-lead-to-client-use-case";
 
-export const ConvertLeadToClientController: FastifyPluginAsyncZod = async (app) => {
+export const ConvertLeadToClientController: FastifyPluginAsyncZod = async (
+	app
+) => {
 	app.post(
 		"/leads/:leadId/convert",
 		{
@@ -17,6 +19,18 @@ export const ConvertLeadToClientController: FastifyPluginAsyncZod = async (app) 
 				summary: "Convert a lead into a client",
 				params: z.object({
 					leadId: z.uuid(),
+				}),
+				body: z.object({
+					maritalStatus: z.string(),
+					profession: z.string(),
+					rg: z.string(),
+					issuingAgency: z.string(),
+					cpf: z.string(),
+					street: z.string(),
+					neighborhood: z.string(),
+					city: z.string(),
+					state: z.string(),
+					zipCode: z.string(),
 				}),
 				response: {
 					201: z.object({
@@ -42,13 +56,33 @@ export const ConvertLeadToClientController: FastifyPluginAsyncZod = async (app) 
 		},
 		async (request, reply) => {
 			const { leadId } = request.params;
-
-			//const workspaceId = request.user.workspaceId;
+			const {
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
+			} = request.body;
 
 			const convertLeadToClientUseCase = makeConvertLeadToClientUseCase();
 
 			const result = await convertLeadToClientUseCase.execute({
 				leadId,
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
 			});
 
 			if (result.isLeft()) {

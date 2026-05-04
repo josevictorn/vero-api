@@ -1,16 +1,16 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { HTTP_STATUS } from "@/utils/constants";
-import { makeEditClientUseCase } from "@/use-cases/clients/factories/make-edit-client-use-case";
 import { ClientNotFoundError } from "@/use-cases/clients/errors/client-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
+import { makeEditClientUseCase } from "@/use-cases/clients/factories/make-edit-client-use-case";
 import { LawyerNotFoundError } from "@/use-cases/leads/errors/lawyer-not-found-error";
+import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
+import { HTTP_STATUS } from "@/utils/constants";
 
 const client_NAME_MIN_LENGTH = 3;
 const CELLPHONE_MIN_LENGTH = 10;
 
-export const EditclientController: FastifyPluginAsyncZod = async (app) => {
+export const EditClientController: FastifyPluginAsyncZod = async (app) => {
 	app.patch(
 		"/clients/:id",
 		{
@@ -27,6 +27,16 @@ export const EditclientController: FastifyPluginAsyncZod = async (app) => {
 					name: z.string().min(client_NAME_MIN_LENGTH).optional(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH).optional(),
 					email: z.email().optional(),
+					maritalStatus: z.string().optional(),
+					profession: z.string().optional(),
+					rg: z.string().optional(),
+					issuingAgency: z.string().optional(),
+					cpf: z.string().optional(),
+					street: z.string().optional(),
+					neighborhood: z.string().optional(),
+					city: z.string().optional(),
+					state: z.string().optional(),
+					zipCode: z.string().optional(),
 				}),
 				response: {
 					200: z.object({
@@ -37,6 +47,16 @@ export const EditclientController: FastifyPluginAsyncZod = async (app) => {
 							name: z.string(),
 							cellphone: z.string(),
 							email: z.email(),
+							marital_status: z.string(),
+							profession: z.string(),
+							rg: z.string(),
+							issuing_agency: z.string(),
+							cpf: z.string(),
+							street: z.string(),
+							neighborhood: z.string(),
+							city: z.string(),
+							state: z.string(),
+							zip_code: z.string(),
 							created_at: z.date(),
 						}),
 					}),
@@ -57,7 +77,23 @@ export const EditclientController: FastifyPluginAsyncZod = async (app) => {
 		},
 		async (request, reply) => {
 			const { id } = request.params;
-			const { workspaceId, lawyerId, name, cellphone, email } = request.body;
+			const {
+				workspaceId,
+				lawyerId,
+				name,
+				cellphone,
+				email,
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
+			} = request.body;
 			const editclientUseCase = makeEditClientUseCase();
 
 			const result = await editclientUseCase.execute({
@@ -67,6 +103,16 @@ export const EditclientController: FastifyPluginAsyncZod = async (app) => {
 				name,
 				cellphone,
 				email,
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
 			});
 
 			if (result.isLeft()) {
@@ -102,6 +148,16 @@ export const EditclientController: FastifyPluginAsyncZod = async (app) => {
 					name: client.name,
 					cellphone: client.cellphone,
 					email: client.email,
+					marital_status: client.maritalStatus,
+					profession: client.profession,
+					rg: client.rg,
+					issuing_agency: client.issuingAgency,
+					cpf: client.cpf,
+					street: client.street,
+					neighborhood: client.neighborhood,
+					city: client.city,
+					state: client.state,
+					zip_code: client.zipCode,
 					created_at: client.createdAt,
 				},
 			});

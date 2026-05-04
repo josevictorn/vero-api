@@ -1,18 +1,18 @@
 import { PrismaClientsRepository } from "@/repositories/prisma/prisma-clients-repository";
-import { PrismaUsersRepository } from "@/repositories/prisma/prisma-users-repository";
+import { PrismaLawyersRepository } from "@/repositories/prisma/prisma-lawyers-repository";
 import { PrismaWorkspacesRepository } from "@/repositories/prisma/prisma-workspaces-repository";
 import { CreateClientUseCase } from "../create-client";
 
 export function makeCreateClientUseCase() {
-    const clientsRepository = new PrismaClientsRepository();
-    const workspacesRepository = new PrismaWorkspacesRepository();
-    const usersRepository = new PrismaUsersRepository();
+	const clientsRepository = new PrismaClientsRepository();
+	const workspacesRepository = new PrismaWorkspacesRepository();
+	const lawyersRepository = new PrismaLawyersRepository();
 
-    const createClientUseCase = new CreateClientUseCase(
-        clientsRepository,
-        workspacesRepository,
-        usersRepository,
-    );
+	const createClientUseCase = new CreateClientUseCase(
+		clientsRepository,
+		workspacesRepository,
+		lawyersRepository
+	);
 
-    return createClientUseCase;
+	return createClientUseCase;
 }

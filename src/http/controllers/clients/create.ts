@@ -2,10 +2,9 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
-import { LawyerNotFoundError } from "@/use-cases/leads/errors/lawyer-not-found-error";
-
 import { makeCreateClientUseCase } from "@/use-cases/clients/factories/make-create-client-use-case";
+import { LawyerNotFoundError } from "@/use-cases/leads/errors/lawyer-not-found-error";
+import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
 
 const CLIENT_NAME_MIN_LENGTH = 3;
@@ -25,6 +24,16 @@ export const CreateClientController: FastifyPluginAsyncZod = async (app) => {
 					name: z.string().min(CLIENT_NAME_MIN_LENGTH),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH),
 					email: z.email(),
+					maritalStatus: z.string(),
+					profession: z.string(),
+					rg: z.string(),
+					issuingAgency: z.string(),
+					cpf: z.string(),
+					street: z.string(),
+					neighborhood: z.string(),
+					city: z.string(),
+					state: z.string(),
+					zipCode: z.string(),
 				}),
 				response: {
 					201: z.object({ clientId: z.uuid() }),
@@ -38,7 +47,23 @@ export const CreateClientController: FastifyPluginAsyncZod = async (app) => {
 			},
 		},
 		async (request, reply) => {
-			const { workspaceId, lawyerId, name, cellphone, email } = request.body;
+			const {
+				workspaceId,
+				lawyerId,
+				name,
+				cellphone,
+				email,
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
+			} = request.body;
 
 			const createClientUseCase = makeCreateClientUseCase();
 
@@ -48,6 +73,16 @@ export const CreateClientController: FastifyPluginAsyncZod = async (app) => {
 				name,
 				cellphone,
 				email,
+				maritalStatus,
+				profession,
+				rg,
+				issuingAgency,
+				cpf,
+				street,
+				neighborhood,
+				city,
+				state,
+				zipCode,
 			});
 
 			if (result.isLeft()) {

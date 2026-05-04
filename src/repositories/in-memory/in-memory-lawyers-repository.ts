@@ -33,6 +33,10 @@ export class InMemoryLawyersRepository implements LawyersRepository {
 			userId: data.userId,
 			workspaceId: data.workspaceId,
 			cellphone: data.cellphone,
+			name: data.name,
+			oab: data.oab,
+			oabState: data.oabState,
+			pix: data.pix,
 			createdAt: new Date(),
 		};
 

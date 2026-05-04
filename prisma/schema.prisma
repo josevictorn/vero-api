@@ -55,6 +55,10 @@ model Lawyer {
   userId      String   @unique @map("user_id")
   workspaceId String   @map("workspace_id")
   cellphone   String
+  name        String
+  oab         String
+  oabState    String   @map("oab_state")
+  pix         String   @map("pix_advogado")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,8 +94,19 @@ model Lead {
 model Client {
   id        String @id @default(uuid())
   name      String
+  maritalStatus String @map("marital_status")
+  profession String
+  rg        String
+  issuingAgency String @map("issuing_agency")
+  cpf       String
+  street    String
+  neighborhood String
+  city      String
+  state     String
+  zipCode   String @map("zip_code")
   email     String
   cellphone String
+  
 
   workspaceId       String  @map("workspace_id")
   lawyerId          String? @map("lawyer_id")

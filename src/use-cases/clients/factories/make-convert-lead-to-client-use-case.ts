@@ -1,5 +1,5 @@
-import { PrismaLeadsRepository } from "@/repositories/prisma/prisma-leads-repository";
 import { PrismaClientsRepository } from "@/repositories/prisma/prisma-clients-repository";
+import { PrismaLeadsRepository } from "@/repositories/prisma/prisma-leads-repository";
 import { PrismaWorkspacesRepository } from "@/repositories/prisma/prisma-workspaces-repository";
 
 import { ConvertLeadToClientUseCase } from "@/use-cases/clients/convert-lead-to-client";

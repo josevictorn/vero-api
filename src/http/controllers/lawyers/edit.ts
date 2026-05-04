@@ -25,6 +25,9 @@ export const EditLawyerController: FastifyPluginAsyncZod = async (app) => {
 					userId: z.uuid().optional(),
 					workspaceId: z.uuid().optional(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH).optional(),
+					oab: z.string().optional(),
+					oabState: z.string().optional(),
+					pix: z.string().optional(),
 				}),
 				response: {
 					200: z.object({
@@ -33,6 +36,9 @@ export const EditLawyerController: FastifyPluginAsyncZod = async (app) => {
 							user_id: z.uuid(),
 							workspace_id: z.uuid(),
 							cellphone: z.string(),
+							oab: z.string(),
+							oab_state: z.string(),
+							pix: z.string(),
 							created_at: z.date(),
 						}),
 					}),
@@ -56,7 +62,8 @@ export const EditLawyerController: FastifyPluginAsyncZod = async (app) => {
 		},
 		async (request, reply) => {
 			const { id } = request.params;
-			const { userId, workspaceId, cellphone } = request.body;
+			const { userId, workspaceId, cellphone, oab, oabState, pix } =
+				request.body;
 			const editLawyerUseCase = makeEditLawyerUseCase();
 
 			const result = await editLawyerUseCase.execute({
@@ -64,6 +71,9 @@ export const EditLawyerController: FastifyPluginAsyncZod = async (app) => {
 				userId,
 				workspaceId,
 				cellphone,
+				oab,
+				oabState,
+				pix,
 			});
 
 			if (result.isLeft()) {
@@ -101,6 +111,9 @@ export const EditLawyerController: FastifyPluginAsyncZod = async (app) => {
 					user_id: lawyer.userId,
 					workspace_id: lawyer.workspaceId,
 					cellphone: lawyer.cellphone,
+					oab: lawyer.oab,
+					oab_state: lawyer.oabState,
+					pix: lawyer.pix,
 					created_at: lawyer.createdAt,
 				},
 			});
