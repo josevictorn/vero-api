@@ -9,14 +9,21 @@ import { UserNotFoundError } from "./errors/user-not-found-error";
 import { WorkspaceNotFoundError } from "./errors/workspace-not-found-error";
 
 interface EditLawyerUseCaseRequest {
+	cellphone?: string;
 	lawyerId: string;
+	name?: string;
+	oab?: string;
+	oabState?: string;
+	pix?: string;
 	userId?: string;
 	workspaceId?: string;
-	cellphone?: string;
 }
 
 type EditLawyerUseCaseResponse = Either<
-	LawyerNotFoundError | UserNotFoundError | WorkspaceNotFoundError | LawyerAlreadyExistsError,
+	| LawyerNotFoundError
+	| UserNotFoundError
+	| WorkspaceNotFoundError
+	| LawyerAlreadyExistsError,
 	{ lawyer: Lawyer }
 >;
 
@@ -32,6 +39,10 @@ export class EditLawyerUseCase {
 		userId,
 		workspaceId,
 		cellphone,
+		name,
+		oab,
+		oabState,
+		pix,
 	}: EditLawyerUseCaseRequest): Promise<EditLawyerUseCaseResponse> {
 		const lawyer = await this.lawyersRepository.findById(lawyerId);
 
@@ -64,6 +75,10 @@ export class EditLawyerUseCase {
 		lawyer.userId = userId ?? lawyer.userId;
 		lawyer.workspaceId = workspaceId ?? lawyer.workspaceId;
 		lawyer.cellphone = cellphone ?? lawyer.cellphone;
+		lawyer.name = name ?? lawyer.name;
+		lawyer.oab = oab ?? lawyer.oab;
+		lawyer.oabState = oabState ?? lawyer.oabState;
+		lawyer.pix = pix ?? lawyer.pix;
 
 		const updatedLawyer = await this.lawyersRepository.save(lawyer);
 

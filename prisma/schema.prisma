@@ -47,10 +47,12 @@ model User {
   email         String   @unique
   password_hash String
   role          Role     @default(ASSISTANT)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  lawyer Lawyer?
+  googleCalendarConnection GoogleCalendarConnection?
+  calendarEvents           CalendarEvent[]
+  lawyer                   Lawyer?
 
   @@map("users")
   @@schema("vero")
@@ -63,13 +65,34 @@ model Workspace {
   email     String
   cellphone String
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   lawyers Lawyer[]
-  leads Lead[]
+  leads   Lead[]
+  clients Client[]
 
   @@map("workspaces")
   @@schema("vero")
+}
+
+model Lawyer {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  workspaceId String   @map("workspace_id")
+  cellphone   String
+  name        String
+  oab         String
+  oabState    String   @map("oab_state")
+  pix         String   @map("pix_advogado")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  leads   Lead[]
+  clients Client[]
+
+  @@map("lawyers")
 }
 
 model Lead {
@@ -84,17 +107,54 @@ model Lead {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  lawyer       Lawyer?        @relation(fields: [lawyerId], references: [id])
+  lawyer    Lawyer?   @relation(fields: [lawyerId], references: [id])
+
   caseAnalyses CaseAnalysis[]
+  client       Client? @relation("LeadToClient")
 
   @@map("leads")
   @@schema("vero")
+  @@index([workspaceId])
+  @@index([lawyerId])
+}
+
+model Client {
+  id        String @id @default(uuid())
+  name      String
+  maritalStatus String @map("marital_status")
+  profession String
+  rg        String
+  issuingAgency String @map("issuing_agency")
+  cpf       String
+  street    String
+  neighborhood String
+  city      String
+  state     String
+  zipCode   String @map("zip_code")
+  email     String
+  cellphone String
+  
+
+  workspaceId       String  @map("workspace_id")
+  lawyerId          String? @map("lawyer_id")
+  createdFromLeadId String? @unique
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  lawyer    Lawyer?   @relation(fields: [lawyerId], references: [id])
+  lead      Lead?     @relation("LeadToClient", fields: [createdFromLeadId], references: [id])
+
+  @@map("clients")
+  @@index([workspaceId])
+  @@index([lawyerId])
 }
 
 model ScreeningFlow {
   id        String   @id @default(uuid())
   caseType  String   @map("case_type")
-  lawyerId    String?  @map("lawyer_id")
+  lawyerId  String?  @map("lawyer_id")
   questions Json
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -102,6 +162,40 @@ model ScreeningFlow {
 
   @@map("screening_flows")
   @@schema("vero")
+}
+
+model GoogleCalendarConnection {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  googleEmail     String   @map("google_email")
+  accessToken     String   @map("access_token")
+  refreshToken    String   @map("refresh_token")
+  tokenExpiresAt  DateTime @map("token_expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("google_calendar_connections")
+}
+
+model CalendarEvent {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  googleEventId String   @map("google_event_id")
+  summary       String
+  description   String?
+  startsAt      DateTime @map("starts_at")
+  endsAt        DateTime @map("ends_at")
+  hangoutLink   String?  @map("hangout_link")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, googleEventId])
+  @@index([userId])
+  @@map("calendar_events")
 }
 
 model AiSession {
@@ -138,20 +232,5 @@ model CaseAnalysis {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("case_analyses")
-  @@schema("vero")
-}
-
-model Lawyer {
-  id          String   @id @default(uuid())
-  userId      String   @unique @map("user_id")
-  workspaceId String   @map("workspace_id")
-  cellphone   String
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  leads     Lead[]
-
-  @@map("lawyers")
   @@schema("vero")
 }

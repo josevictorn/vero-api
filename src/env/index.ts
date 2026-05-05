@@ -1,9 +1,11 @@
 import "dotenv/config";
 import { z } from "zod";
 
+const DEFAULT_PORT = 3333;
+
 const envSchema = z.object({
 	NODE_ENV: z.enum(["dev", "test", "production"]).default("dev"),
-	PORT: z.coerce.number().default(3333),
+	PORT: z.coerce.number().default(DEFAULT_PORT),
 	JWT_SECRET: z.string(),
 	DATABASE_URL: z.url(),
 	DATABASE_SCHEMA: z.string().default("public"),
@@ -11,14 +13,20 @@ const envSchema = z.object({
 	EVOLUTION_API_KEY: z.string(),
 	EVOLUTION_INSTANCE_NAME: z.string(),
 	REDIS_URL: z.string().default("redis://localhost:6379"),
+	GOOGLE_CLIENT_ID: z.string(),
+	GOOGLE_CLIENT_SECRET: z.string(),
+	GOOGLE_OAUTH_REDIRECT_URI: z.url(),
+	GOOGLE_OAUTH_STATE_SECRET: z.string(),
+	GOOGLE_FOLDER_ID: z.string(),
+	GOOGLE_TEMPLATE_ID: z.string(),
 });
 
 const _env = envSchema.safeParse(process.env);
 
 if (_env.success === false) {
-	console.error("❌ Invalid environment variables", z.flattenError(_env.error));
-
-	throw new Error("Invalid environment variables.");
+	throw new Error(
+		`Invalid environment variables: ${JSON.stringify(z.flattenError(_env.error))}`
+	);
 }
 
 export const env = _env.data;

@@ -17,6 +17,10 @@ describe("Delete Lawyer Use Case", () => {
 			userId: "user-1",
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({ lawyerId: lawyer.id });

@@ -1,22 +1,35 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryLawyersRepository } from "@/repositories/in-memory/in-memory-lawyers-repository";
+import { InMemoryUsersRepository } from "@/repositories/in-memory/in-memory-users-repository";
 import { LawyerNotFoundError } from "./errors/lawyer-not-found-error";
 import { GetLawyerUseCase } from "./get-lawyer";
 
 let lawyersRepository: InMemoryLawyersRepository;
+let usersRepository: InMemoryUsersRepository;
 let sut: GetLawyerUseCase;
 
 describe("Get Lawyer Use Case", () => {
 	beforeEach(() => {
 		lawyersRepository = new InMemoryLawyersRepository();
-		sut = new GetLawyerUseCase(lawyersRepository);
+		usersRepository = new InMemoryUsersRepository();
+		sut = new GetLawyerUseCase(lawyersRepository, usersRepository);
 	});
 
 	it("should be able to get a lawyer by id", async () => {
+		const user = await usersRepository.create({
+			name: "João Silva",
+			email: "joao@example.com",
+			password_hash: "hash",
+		});
+
 		const lawyer = await lawyersRepository.create({
-			userId: "user-1",
+			userId: user.id,
 			workspaceId: "workspace-1",
 			cellphone: "11999997777",
+			name: "João Silva",
+			oab: "OAB12345",
+			oabState: "SP",
+			pix: "pix@example.com",
 		});
 
 		const result = await sut.execute({ lawyerId: lawyer.id });
@@ -28,6 +41,10 @@ describe("Get Lawyer Use Case", () => {
 				userId: lawyer.userId,
 				cellphone: lawyer.cellphone,
 			}),
+			user: {
+				name: user.name,
+				email: user.email,
+			},
 		});
 	});
 
