@@ -3,6 +3,7 @@ import { InMemoryAiSessionRepository } from "@/repositories/in-memory/in-memory-
 import { InMemoryCaseAnalysisRepository } from "@/repositories/in-memory/in-memory-case-analysis-repository";
 import { InMemoryLeadsRepository } from "@/repositories/in-memory/in-memory-leads-repository";
 import { AiSessionNotFoundError } from "../ai-session/errors/ai-session-not-found-error";
+import { AiSessionStatus } from "@generated/prisma/client";
 import { LeadNotFoundError } from "../leads/errors/lead-not-found-error";
 import { EditCaseAnalysisUseCase } from "./edit-case-analysis";
 import { CaseAnalysisNotFoundError } from "./errors/case-analysis-not-found-error";
@@ -61,7 +62,7 @@ describe("Edit Case Analysis Use Case", () => {
 	it("should be able to edit with a new ai session", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-2",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: {},
 			name: "Session 2",
 			cellphone: "11999990002",

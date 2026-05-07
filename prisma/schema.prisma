@@ -4,18 +4,40 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["vero"]
 }
 
 enum Role {
   ADMIN
   LAWYER
   ASSISTANT
+
+  @@schema("vero")
+}
+
+enum LeadStatus {
+  NEW_LEAD
+  INTERVIEWING
+  FORWARDED
+  COMPLETED
+
+  @@schema("vero")
+}
+
+enum AiSessionStatus {
+  IDENTIFYING
+  INTERVIEWING
+  FORWARDED
+  BOOKING
+  BOOKED
+
+  @@schema("vero")
 }
 
 model User {
@@ -32,6 +54,7 @@ model User {
   lawyer                   Lawyer?
 
   @@map("users")
+  @@schema("vero")
 }
 
 model Workspace {
@@ -48,6 +71,7 @@ model Workspace {
   clients Client[]
 
   @@map("workspaces")
+  @@schema("vero")
 }
 
 model Lawyer {
@@ -68,6 +92,7 @@ model Lawyer {
   clients Client[]
 
   @@map("lawyers")
+  @@schema("vero")
 }
 
 model Lead {
@@ -76,7 +101,8 @@ model Lead {
   lawyerId    String?  @map("lawyer_id")
   name        String
   cellphone   String
-  email       String
+  email       String?
+  status      LeadStatus @default(NEW_LEAD) @map("lead_status")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -87,6 +113,7 @@ model Lead {
   client       Client? @relation("LeadToClient")
 
   @@map("leads")
+  @@schema("vero")
   @@index([workspaceId])
   @@index([lawyerId])
 }
@@ -122,6 +149,7 @@ model Client {
   @@map("clients")
   @@index([workspaceId])
   @@index([lawyerId])
+  @@schema("vero")
 }
 
 model ScreeningFlow {
@@ -134,6 +162,7 @@ model ScreeningFlow {
   aiSessions AiSession[]
 
   @@map("screening_flows")
+  @@schema("vero")
 }
 
 model GoogleCalendarConnection {
@@ -149,6 +178,7 @@ model GoogleCalendarConnection {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("google_calendar_connections")
+  @@schema("vero")
 }
 
 model CalendarEvent {
@@ -168,13 +198,15 @@ model CalendarEvent {
   @@unique([userId, googleEventId])
   @@index([userId])
   @@map("calendar_events")
+  @@schema("vero")
 }
 
 model AiSession {
   id              String   @id @default(uuid())
   screeningFlowId String?  @map("screening_flow_id")
+  leadId          String?  @map("lead_id")
   chatId          String   @map("chat_id")
-  status          String
+  status          AiSessionStatus @default(IDENTIFYING)
   chatState       Json     @map("chat_state")
   name            String
   cellphone       String
@@ -185,6 +217,7 @@ model AiSession {
   caseAnalyses  CaseAnalysis[]
 
   @@map("ai_sessions")
+  @@schema("vero")
 }
 
 model CaseAnalysis {
@@ -202,4 +235,5 @@ model CaseAnalysis {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("case_analyses")
+  @@schema("vero")
 }

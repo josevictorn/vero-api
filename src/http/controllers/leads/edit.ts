@@ -26,7 +26,8 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 					lawyerId: z.uuid().nullable().optional(),
 					name: z.string().min(LEAD_NAME_MIN_LENGTH).optional(),
 					cellphone: z.string().min(CELLPHONE_MIN_LENGTH).optional(),
-					email: z.email().optional(),
+					email: z.string().email().optional().nullable(),
+					status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]).optional(),
 				}),
 				response: {
 					200: z.object({
@@ -36,7 +37,8 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 							lawyer_id: z.uuid().nullable(),
 							name: z.string(),
 							cellphone: z.string(),
-							email: z.email(),
+							email: z.string().email().nullable(),
+							status: z.enum(["NEW_LEAD", "INTERVIEWING", "FORWARDED", "COMPLETED"]),
 							created_at: z.date(),
 						}),
 					}),
@@ -57,7 +59,7 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 		},
 		async (request, reply) => {
 			const { id } = request.params;
-			const { workspaceId, lawyerId, name, cellphone, email } = request.body;
+			const { workspaceId, lawyerId, name, cellphone, email, status } = request.body;
 			const editLeadUseCase = makeEditLeadUseCase();
 
 			const result = await editLeadUseCase.execute({
@@ -67,6 +69,7 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 				name,
 				cellphone,
 				email,
+				status,
 			});
 
 			if (result.isLeft()) {
@@ -102,6 +105,7 @@ export const EditLeadController: FastifyPluginAsyncZod = async (app) => {
 					name: lead.name,
 					cellphone: lead.cellphone,
 					email: lead.email,
+					status: lead.status,
 					created_at: lead.createdAt,
 				},
 			});

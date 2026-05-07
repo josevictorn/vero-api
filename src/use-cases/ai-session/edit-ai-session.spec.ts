@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { AiSessionStatus } from "@generated/prisma/client";
 import { InMemoryAiSessionRepository } from "@/repositories/in-memory/in-memory-ai-session-repository";
 import { InMemoryScreeningFlowsRepository } from "@/repositories/in-memory/in-memory-screening-flows-repository";
 import { EditAiSessionUseCase } from "./edit-ai-session";
@@ -22,7 +23,7 @@ describe("Edit AI Session Use Case", () => {
 	it("should be able to edit an ai session", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-123",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",
@@ -31,7 +32,7 @@ describe("Edit AI Session Use Case", () => {
 		const result = await sut.execute({
 			aiSessionId: aiSession.id,
 			name: "Jane Doe",
-			status: "completed",
+			status: AiSessionStatus.BOOKED,
 		});
 
 		expect(result.isRight()).toBe(true);
@@ -41,7 +42,7 @@ describe("Edit AI Session Use Case", () => {
 				expect.objectContaining({
 					id: aiSession.id,
 					name: "Jane Doe",
-					status: "completed",
+					status: AiSessionStatus.BOOKED,
 					chatId: "chat-123",
 				})
 			);
@@ -56,7 +57,7 @@ describe("Edit AI Session Use Case", () => {
 
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-123",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",
@@ -83,7 +84,7 @@ describe("Edit AI Session Use Case", () => {
 		const aiSession = await aiSessionRepository.create({
 			screeningFlowId: screeningFlow.id,
 			chatId: "chat-123",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",
@@ -114,7 +115,7 @@ describe("Edit AI Session Use Case", () => {
 	it("should not be able to edit with non-existing screening flow", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-123",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",

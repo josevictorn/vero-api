@@ -21,6 +21,7 @@ import { screeningFlowsRoutes } from "@/http/controllers/screening-flows/routes"
 import { workspacesRoutes } from "@/http/controllers/workspaces/routes";
 import { lawyersRoutes } from "./http/controllers/lawyers/routes";
 import { leadsRoutes } from "./http/controllers/leads/routes";
+import { webhooksRoutes } from "./http/controllers/webhooks/routes";
 import { clientsRoutes } from "./http/controllers/clients/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
@@ -78,6 +79,7 @@ app.register(calendarRoutes);
 app.register(aiSessionsRoutes);
 app.register(caseAnalysisRoutes);
 app.register(lawyersRoutes);
+app.register(webhooksRoutes);
 app.register(clientsRoutes);
 
 app.setErrorHandler((error, _, reply) => {

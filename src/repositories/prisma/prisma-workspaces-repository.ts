@@ -21,6 +21,12 @@ export class PrismaWorkspacesRepository implements WorkspacesRepository {
 		return workspace;
 	}
 
+	async findFirst() {
+		const workspace = await prisma.workspace.findFirst();
+
+		return workspace;
+	}
+
 	async create(data: Prisma.WorkspaceCreateInput) {
 		const workspace = await prisma.workspace.create({
 			data,

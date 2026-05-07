@@ -1,4 +1,4 @@
-import type { AiSession, Prisma } from "@generated/prisma/client";
+import type { AiSession, AiSessionStatus, Prisma } from "@generated/prisma/client";
 import type { AiSessionRepository } from "@/repositories/ai-session-repository";
 import type { ScreeningFlowsRepository } from "@/repositories/screening-flows-repository";
 import { type Either, left, right } from "@/utils/either";
@@ -13,7 +13,7 @@ interface EditAiSessionUseCaseRequest {
 	isThirdParty?: boolean;
 	name?: string;
 	screeningFlowId?: string | null;
-	status?: string;
+	status?: AiSessionStatus;
 }
 
 type EditAiSessionUseCaseResponse = Either<
@@ -58,7 +58,7 @@ export class EditAiSessionUseCase {
 				: screeningFlowId;
 		aiSession.chatId = chatId ?? aiSession.chatId;
 		aiSession.status = status ?? aiSession.status;
-		aiSession.chatState = chatState ?? aiSession.chatState;
+		aiSession.chatState = (chatState as Prisma.JsonValue) ?? aiSession.chatState;
 		aiSession.name = name ?? aiSession.name;
 		aiSession.cellphone = cellphone ?? aiSession.cellphone;
 		aiSession.isThirdParty = isThirdParty ?? aiSession.isThirdParty;

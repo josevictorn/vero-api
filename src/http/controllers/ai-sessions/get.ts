@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
+import { AiSessionStatus } from "@generated/prisma/client";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
 import { AiSessionNotFoundError } from "@/use-cases/ai-session/errors/ai-session-not-found-error";
 import { makeGetAiSessionUseCase } from "@/use-cases/ai-session/factories/make-get-ai-session-use-case";
@@ -21,7 +22,7 @@ export const GetAiSessionController: FastifyPluginAsyncZod = async (app) => {
 						id: z.uuid(),
 						screening_flow_id: z.uuid().nullable(),
 						chat_id: z.string(),
-						status: z.string(),
+						status: z.nativeEnum(AiSessionStatus),
 						chat_state: z.any(),
 						name: z.string(),
 						cellphone: z.string(),

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { AiSessionStatus } from "@generated/prisma/client";
 import { InMemoryAiSessionRepository } from "@/repositories/in-memory/in-memory-ai-session-repository";
 import { DeleteAiSessionUseCase } from "./delete-ai-session";
 import { AiSessionNotFoundError } from "./errors/ai-session-not-found-error";
@@ -15,7 +16,7 @@ describe("Delete AI Session Use Case", () => {
 	it("should be able to delete ai session", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-123",
-			status: "active",
+			status: AiSessionStatus.IDENTIFYING,
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",
