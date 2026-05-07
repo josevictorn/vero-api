@@ -6,7 +6,6 @@
 generator client {
   provider        = "prisma-client"
   output          = "../generated/prisma"
-  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
@@ -93,6 +92,7 @@ model Lawyer {
   clients Client[]
 
   @@map("lawyers")
+  @@schema("vero")
 }
 
 model Lead {
@@ -149,6 +149,7 @@ model Client {
   @@map("clients")
   @@index([workspaceId])
   @@index([lawyerId])
+  @@schema("vero")
 }
 
 model ScreeningFlow {
@@ -177,6 +178,7 @@ model GoogleCalendarConnection {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("google_calendar_connections")
+  @@schema("vero")
 }
 
 model CalendarEvent {
@@ -196,6 +198,7 @@ model CalendarEvent {
   @@unique([userId, googleEventId])
   @@index([userId])
   @@map("calendar_events")
+  @@schema("vero")
 }
 
 model AiSession {
