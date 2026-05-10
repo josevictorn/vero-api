@@ -52,6 +52,7 @@ model User {
   googleCalendarConnection GoogleCalendarConnection?
   calendarEvents           CalendarEvent[]
   lawyer                   Lawyer?
+  passwordResetToken       PasswordResetToken[]
 
   @@map("users")
   @@schema("vero")
@@ -235,5 +236,20 @@ model CaseAnalysis {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("case_analyses")
+  @@schema("vero")
+}
+
+model PasswordResetToken {
+  id        String      @id @default(uuid())
+  userId    String      @map("user_id")
+  token     String      @unique
+  expiresAt DateTime    @map("expires_at")
+  usedAt    DateTime?   @map("used_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_token")
   @@schema("vero")
 }
