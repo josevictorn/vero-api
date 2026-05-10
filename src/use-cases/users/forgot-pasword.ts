@@ -1,8 +1,8 @@
-import {EmailGateway} from "@/infra/google/email/email-gateway";
-import {PasswordResetTokensRepository} from "@/repositories/password-reset-tokens-repository";
-import {UsersRepository} from "@/repositories/users-repository";
-import { type Either, left, right } from "@/utils/either";
-import {createHash, randomBytes} from "node:crypto";
+import { MailSender } from "@/infra/email/mail-sender";
+import { PasswordResetTokensRepository } from "@/repositories/password-reset-tokens-repository";
+import { UsersRepository } from "@/repositories/users-repository";
+import { type Either, right } from "@/utils/either";
+import { createHash, randomBytes } from "node:crypto";
 
 const TOKEN_TTL_MS = 1000 * 60 * 15;
 
@@ -16,7 +16,7 @@ export class ForgotPasswordUseCase {
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly passwordResetTokensRepository: PasswordResetTokensRepository,
-        private readonly emailGateway: EmailGateway,
+        private readonly emailSender: MailSender,
     ) {}
 
     async execute({ email }: ForgotPasswordUseCaseRequest): Promise<ForgotPasswordUseCaseResponse> {
@@ -40,7 +40,7 @@ export class ForgotPasswordUseCase {
             expiresAt: new Date(Date.now() + TOKEN_TTL_MS),
         });
 
-        await this.emailGateway.send({
+        await this.emailSender.send({
             to: user.email,
             subject: "Reperação de senha - Vero",
             html: `

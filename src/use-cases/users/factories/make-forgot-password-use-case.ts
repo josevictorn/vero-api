@@ -1,16 +1,16 @@
-import {makeEmailGateway} from "@/infra/google/email/make-email-gateway";
-import {PrismaPasswordResetTokensRepository} from "@/repositories/prisma/prisma-password-reset-tokens-repository";
-import {PrismaUsersRepository} from "@/repositories/prisma/prisma-users-repository";
-import {ForgotPasswordUseCase} from "../forgot-pasword";
+import { PrismaPasswordResetTokensRepository } from "@/repositories/prisma/prisma-password-reset-tokens-repository";
+import { PrismaUsersRepository } from "@/repositories/prisma/prisma-users-repository";
+import { ForgotPasswordUseCase } from "../forgot-pasword";
+import { makeEmailSender } from "@/infra/email/make-email-sender";
 
 export function makeForgotPasswordUseCase() {
     const usersRepository = new PrismaUsersRepository();
     const passwordResetTokensRepository = new PrismaPasswordResetTokensRepository();
-    const emailGateway = makeEmailGateway();
+    const emailSender = makeEmailSender();
 
     return new ForgotPasswordUseCase(
         usersRepository,
         passwordResetTokensRepository,
-        emailGateway
+        emailSender
     );
 }
