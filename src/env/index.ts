@@ -25,6 +25,7 @@ const envSchema = z.object({
     SMTP_PORT: z.string(),
     SMTP_USER: z.string(),
     SMTP_PASSWORD: z.string(),
+    RESEND_API_KEY: z.string(),
 });
 
 const _env = envSchema.safeParse(process.env);
