@@ -1,8 +1,8 @@
-import nodemailer from "nodemailer";
+import * as nodemailer from "nodemailer";
 import { MailSender, SendEmailInput } from "./mail-sender";
 import { env } from "@/env";
 
-export class NodemailerEmailGateway implements MailSender {
+export class NodemailerEmailSender implements MailSender {
     private transport = nodemailer.createTransport({
         host: env.SMTP_HOST,
         port: env.SMTP_PORT,

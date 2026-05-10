@@ -1,5 +1,5 @@
-import { NodemailerEmailGateway } from "./nodemailer-email-sender";
+import { NodemailerEmailSender } from "./nodemailer-email-sender";
 
 export function makeEmailSender() {
-    return new NodemailerEmailGateway();
+    return new NodemailerEmailSender();
 }
