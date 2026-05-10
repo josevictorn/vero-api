@@ -19,6 +19,7 @@ const envSchema = z.object({
 	GOOGLE_OAUTH_STATE_SECRET: z.string(),
 	GOOGLE_FOLDER_ID: z.string(),
 	GOOGLE_TEMPLATE_ID: z.string(),
+    APP_URL: z.string(),
     EMAIL_FROM: z.string(),
     SMTP_HOST: z.string(),
     SMTP_PORT: z.string(),
