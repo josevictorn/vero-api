@@ -23,6 +23,7 @@ import { lawyersRoutes } from "./http/controllers/lawyers/routes";
 import { leadsRoutes } from "./http/controllers/leads/routes";
 import { webhooksRoutes } from "./http/controllers/webhooks/routes";
 import { clientsRoutes } from "./http/controllers/clients/routes";
+import {passwordRoutes} from "./http/controllers/password/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
@@ -81,6 +82,7 @@ app.register(caseAnalysisRoutes);
 app.register(lawyersRoutes);
 app.register(webhooksRoutes);
 app.register(clientsRoutes);
+app.register(passwordRoutes);
 
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {
