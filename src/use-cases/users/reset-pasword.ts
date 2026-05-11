@@ -32,15 +32,7 @@ export class ResetPasswordUseCase {
 
         const resetToken = await this.passwordResetTokensRepository.findByToken(tokenHash);
 
-        if (!resetToken) {
-            return left(new InvalidOrExpiredToken());
-        }
-
-        if (resetToken.usedAt != null) {
-            return left(new InvalidOrExpiredToken());
-        }
-
-        if (resetToken.expiresAt < new Date()) {
+        if (!resetToken || resetToken.usedAt != null || resetToken.expiresAt < new Date()) {
             return left(new InvalidOrExpiredToken());
         }
 
