@@ -98,7 +98,7 @@ export class GeneratePetitionUseCase {
           texto_dos_fatos:          caseAnalysis.analysisText,
           texto_fundamentacao_juridica: caseAnalysis.mainLegalBase,
           interesse_conciliacao:    "",
-          texto_dos_pedidos:        caseAnalysis.viabilityLabel,
+          texto_dos_pedidos:        "",
           valor_da_causa:           "",
 
           NOME_ADVOGADO:            lawyer.name,

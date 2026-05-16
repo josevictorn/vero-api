@@ -73,8 +73,8 @@ export class GenerateRequestUseCase {
         const documentName = `Requeriemento - ${client.name}`;
 
         const replacements = {
-            orgao_destino: "ORGAO QUALQUER",
-            assunto: "ASSUNTO REQUERIMENTO" ,
+            orgao_destino: "",
+            assunto: "" ,
             nome_cliente: client.name,
             estado_civil_cliente: client.maritalStatus,
             profissao_cliente: client.profession,
