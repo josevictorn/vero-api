@@ -6,6 +6,8 @@ import { EditClientController } from "./edit";
 import { FetchClientsController } from "./fetch";
 import { GenerateContractController } from "./generate-contract";
 import { GetClientController } from "./get";
+import {GenerateRequestController} from "./generate-request";
+import {GeneratePetitionController} from "./generate-petition";
 
 export async function clientsRoutes(app: FastifyInstance) {
 	await app.register(ConvertLeadToClientController);
@@ -15,4 +17,6 @@ export async function clientsRoutes(app: FastifyInstance) {
 	await app.register(DeleteClientController);
 	await app.register(FetchClientsController);
 	await app.register(GenerateContractController);
+    await app.register(GenerateRequestController);
+    await app.register(GeneratePetitionController);
 }
