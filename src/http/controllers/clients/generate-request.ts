@@ -10,7 +10,7 @@ import { z } from "zod";
 
 export const GenerateRequestController: FastifyPluginAsyncZod = async (app) => {
     app.post(
-        "/clients/:id/contract",
+        "/clients/:id/request",
         {
             onRequest: [verifyJWT],
             schema: {
