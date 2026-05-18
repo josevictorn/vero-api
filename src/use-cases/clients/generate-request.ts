@@ -10,6 +10,7 @@ import { LawyerNotFoundError } from "../lawyers/errors/lawyer-not-found-error";
 import { GoogleDocsIntegrationError } from "./errors/google-docs-integration-error";
 import { CaseAnalysisNotFoundError } from "../case-analysis/errors/case-analysis-not-found-error";
 import { ensureGoogleAccessToken } from "../calendar/ensure-google-access-token";
+import { env } from "@/env";
 
 interface GenerateRequestUseCaseRequest {
     clientId: string;
@@ -103,6 +104,7 @@ export class GenerateRequestUseCase {
 
             const { documentUrl } = await this.driveDocsGateway.copyTemplateAndReplace({
                 accessToken,
+                templateId: env.GOOGLE_REQUEST_TEMPLATE_ID,
                 documentName,
                 replacements,
             });
