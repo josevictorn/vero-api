@@ -1,6 +1,6 @@
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { makeFetchCaseAnalysisUseCase } from "@/use-cases/case-analysis/factories/make-fetch-case-analysis-use-case";
-import { InvalidPageError } from "@/use-cases/users/errors/invalid-page-error";
+import { InvalidPageError } from "@/instance/use-cases/case-analysis/errors/invalid-page-error";
+import { makeFetchCaseAnalysisUseCase } from "@/instance/use-cases/case-analysis/factories/make-fetch-case-analysis-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import z from "zod";

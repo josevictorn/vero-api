@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { makeFetchClientsUseCase } from "@/use-cases/clients/factories/make-fetch-clients-use-case";
-import { InvalidPageError } from "@/use-cases/users/errors/invalid-page-error";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeFetchClientsUseCase } from "@/instance/use-cases/clients/factories/make-fetch-clients-use-case";
+import { InvalidPageError } from "@/core/use-cases/leads/errors/invalid-page-error";
 
 export const FetchClientsController: FastifyPluginAsyncZod = async (app) => {
 	app.get(

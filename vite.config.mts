@@ -13,7 +13,6 @@ export default defineConfig({
 				extends: true,
 				test: {
 					name: "unit",
-					dir: "src/use-cases",
 				},
 			},
 		],

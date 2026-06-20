@@ -1,11 +1,11 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { LeadAlreadyConvertedError } from "@/use-cases/clients/errors/lead-already-converted-error";
-import { makeConvertLeadToClientUseCase } from "@/use-cases/clients/factories/make-convert-lead-to-client-use-case";
-import { LeadNotFoundError } from "@/use-cases/leads/errors/lead-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeConvertLeadToClientUseCase } from "@/instance/use-cases/clients/factories/make-convert-lead-to-client-use-case";
+import { LeadNotFoundError } from "@/core/use-cases/leads/errors/lead-not-found-error";
+import { WorkspaceNotFoundError } from "@/core/use-cases/leads/errors/workspace-not-found-error";
+import { LeadAlreadyConvertedError } from "@/instance/use-cases/clients/errors/lead-already-converted-error";
 
 export const ConvertLeadToClientController: FastifyPluginAsyncZod = async (
 	app

@@ -1,4 +1,4 @@
-import { usersRoutes } from "@controllers/users/routes";
+import { usersRoutes } from "@/core/controllers/users/routes";
 import { fastifyCors } from "@fastify/cors";
 import { fastifyJwt } from "@fastify/jwt";
 import { fastifySwagger } from "@fastify/swagger";
@@ -14,16 +14,18 @@ import {
 } from "fastify-type-provider-zod";
 import z, { ZodError } from "zod";
 import { env } from "@/env";
-import { aiSessionsRoutes } from "@/http/controllers/ai-sessions/routes";
-import { calendarRoutes } from "@/http/controllers/calendar/routes";
+// --- Framework (core) routes ---
+import { aiSessionsRoutes } from "@/core/controllers/ai-sessions/routes";
+import { screeningFlowsRoutes } from "@/core/controllers/screening-flows/routes";
+import { workspacesRoutes } from "@/core/controllers/workspaces/routes";
+import { leadsRoutes } from "@/core/controllers/leads/routes";
+import { webhooksRoutes } from "@/core/controllers/webhooks/routes";
+import { passwordRoutes } from "@/core/controllers/password/routes";
+// --- Instance (Vero) routes ---
+import { lawyersRoutes } from "@/http/controllers/lawyers/routes";
+import { clientsRoutes } from "@/http/controllers/clients/routes";
 import { caseAnalysisRoutes } from "@/http/controllers/case-analysis/routes";
-import { screeningFlowsRoutes } from "@/http/controllers/screening-flows/routes";
-import { workspacesRoutes } from "@/http/controllers/workspaces/routes";
-import { lawyersRoutes } from "./http/controllers/lawyers/routes";
-import { leadsRoutes } from "./http/controllers/leads/routes";
-import { webhooksRoutes } from "./http/controllers/webhooks/routes";
-import { clientsRoutes } from "./http/controllers/clients/routes";
-import {passwordRoutes} from "./http/controllers/password/routes";
+import { calendarRoutes } from "@/http/controllers/calendar/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 

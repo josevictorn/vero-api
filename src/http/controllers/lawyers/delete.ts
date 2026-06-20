@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
-import { makeDeleteLawyerUseCase } from "@/use-cases/lawyers/factories/make-delete-lawyer-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeDeleteLawyerUseCase } from "@/instance/use-cases/lawyers/factories/make-delete-lawyer-use-case";
+import { LawyerNotFoundError } from "@/instance/use-cases/lawyers/errors/lawyer-not-found-error";
 
 export const DeleteLawyerController: FastifyPluginAsyncZod = async (app) => {
 	app.delete(

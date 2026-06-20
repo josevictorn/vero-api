@@ -1,11 +1,11 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { ClientNotFoundError } from "@/use-cases/clients/errors/client-not-found-error";
-import { makeEditClientUseCase } from "@/use-cases/clients/factories/make-edit-client-use-case";
-import { LawyerNotFoundError } from "@/use-cases/leads/errors/lawyer-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeEditClientUseCase } from "@/instance/use-cases/clients/factories/make-edit-client-use-case";
+import { ClientNotFoundError } from "@/instance/use-cases/clients/errors/client-not-found-error";
+import { WorkspaceNotFoundError } from "@/core/use-cases/leads/errors/workspace-not-found-error";
+import { LawyerNotFoundError } from "@/instance/use-cases/lawyers/errors/lawyer-not-found-error";
 
 const client_NAME_MIN_LENGTH = 3;
 const CELLPHONE_MIN_LENGTH = 10;

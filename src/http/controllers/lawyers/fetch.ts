@@ -1,10 +1,10 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { InvalidPageError } from "@/use-cases/lawyers/errors/invalid-page-error";
-import { UserNotFoundError } from "@/use-cases/lawyers/errors/user-not-found-error";
-import { makeFetchLawyersUseCase } from "@/use-cases/lawyers/factories/make-fetch-lawyers-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeFetchLawyersUseCase } from "@/instance/use-cases/lawyers/factories/make-fetch-lawyers-use-case";
+import { InvalidPageError } from "@/instance/use-cases/lawyers/errors/invalid-page-error";
+import { UserNotFoundError } from "@/instance/use-cases/lawyers/errors/user-not-found-error";
 
 export const FetchLawyersController: FastifyPluginAsyncZod = async (app) => {
 	app.get(

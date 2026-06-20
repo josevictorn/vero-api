@@ -22,6 +22,8 @@
     "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["*"],
+      "@core/*": ["core/*"],
+      "@instance/*": ["instance/*"],
       "@generated/*": ["../generated/*"],
       "@controllers/*": ["http/controllers/*"],
       "@utils/*": ["utils/*"],

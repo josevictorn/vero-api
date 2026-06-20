@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Lawyer, Prisma } from "@generated/prisma/client";
-import type { LawyersRepository } from "@/repositories/lawyers-repository";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import type { PaginationParams } from "@/utils/pagination-params";
+import { LawyersRepository } from "@/instance/repositories/lawyers-repository";
 
 export class InMemoryLawyersRepository implements LawyersRepository {
 	private items: Lawyer[] = [];

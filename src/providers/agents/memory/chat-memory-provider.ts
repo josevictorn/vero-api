@@ -1,4 +1,4 @@
-import type { ChatMessage } from "@/providers/agents/types/chat-message";
+import { ChatMessage } from "@/core/agents/types/chat-message";
 
 export interface ChatMemoryProvider {
 	getHistory(key: string): Promise<ChatMessage[]>;

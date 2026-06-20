@@ -1,8 +1,8 @@
 import type { Client, Prisma } from "@generated/prisma/client";
-import type { ClientsRepository } from "@repositories/clients-repository";
 import { prisma } from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import type { PaginationParams } from "@/utils/pagination-params";
+import { ClientsRepository } from "@/instance/repositories/clients-repository";
 
 export class PrismaClientsRepository implements ClientsRepository {
 	async findById(id: string) {

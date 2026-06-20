@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import z from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { AiSessionNotFoundError } from "@/use-cases/ai-session/errors/ai-session-not-found-error";
-import { makeCreateCaseAnalysisUseCase } from "@/use-cases/case-analysis/factories/make-create-case-analysis-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeCreateCaseAnalysisUseCase } from "@/instance/use-cases/case-analysis/factories/make-create-case-analysis-use-case";
+import { AiSessionNotFoundError } from "@/core/use-cases/ai-session/errors/ai-session-not-found-error";
 
 export const CreateCaseAnalysisController: FastifyPluginAsyncZod = async (
 	app

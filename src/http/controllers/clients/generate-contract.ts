@@ -1,12 +1,12 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { ClientNotFoundError } from "@/use-cases/clients/errors/client-not-found-error";
-import { GoogleDocsIntegrationError } from "@/use-cases/clients/errors/google-docs-integration-error";
-import { makeGenerateContractUseCase } from "@/use-cases/clients/factories/make-generate-contract-use-case";
-import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeGenerateContractUseCase } from "@/instance/use-cases/clients/factories/make-generate-contract-use-case";
+import { ClientNotFoundError } from "@/instance/use-cases/clients/errors/client-not-found-error";
+import { LawyerNotFoundError } from "@/core/use-cases/leads/errors/lawyer-not-found-error";
+import { WorkspaceNotFoundError } from "@/core/use-cases/leads/errors/workspace-not-found-error";
+import { GoogleDocsIntegrationError } from "@/instance/use-cases/clients/errors/google-docs-integration-error";
 
 export const GenerateContractController: FastifyPluginAsyncZod = async (
 	app

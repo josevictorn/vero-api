@@ -2,10 +2,10 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { makeCreateClientUseCase } from "@/use-cases/clients/factories/make-create-client-use-case";
-import { LawyerNotFoundError } from "@/use-cases/leads/errors/lawyer-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/workspaces/errors/workspace-not-found-error";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeCreateClientUseCase } from "@/instance/use-cases/clients/factories/make-create-client-use-case";
+import { WorkspaceNotFoundError } from "@/core/use-cases/leads/errors/workspace-not-found-error";
+import { LawyerNotFoundError } from "@/instance/use-cases/lawyers/errors/lawyer-not-found-error";
 
 const CLIENT_NAME_MIN_LENGTH = 3;
 const CELLPHONE_MIN_LENGTH = 10;

@@ -1,4 +1,4 @@
-import type { ChatMessage } from "@/providers/agents/types/chat-message";
+import { ChatMessage } from "@/core/agents/types/chat-message";
 import type { ChatMemoryProvider } from "./chat-memory-provider";
 
 export class InMemoryChatMemoryProvider implements ChatMemoryProvider {

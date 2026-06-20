@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { GoogleCalendarIntegrationError } from "@/use-cases/calendar/errors/google-calendar-integration-error";
-import { InvalidOAuthStateError } from "@/use-cases/calendar/errors/invalid-oauth-state-error";
-import { makeConnectGoogleCalendarUseCase } from "@/use-cases/calendar/factories/make-connect-google-calendar-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeConnectGoogleCalendarUseCase } from "@/instance/use-cases/calendar/factories/make-connect-google-calendar-use-case";
+import { InvalidOAuthStateError } from "@/instance/use-cases/calendar/errors/invalid-oauth-state-error";
+import { GoogleCalendarIntegrationError } from "@/instance/use-cases/calendar/errors/google-calendar-integration-error";
 
 export const GoogleCallbackController: FastifyPluginAsyncZod = async (app) => {
 	app.get(

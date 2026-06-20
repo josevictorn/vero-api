@@ -1,6 +1,6 @@
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { CaseAnalysisNotFoundError } from "@/use-cases/case-analysis/errors/case-analysis-not-found-error";
-import { makeEditCaseAnalysisUseCase } from "@/use-cases/case-analysis/factories/make-edit-case-analysis-use-case";
+import { CaseAnalysisNotFoundError } from "@/instance/use-cases/case-analysis/errors/case-analysis-not-found-error";
+import { makeEditCaseAnalysisUseCase } from "@/instance/use-cases/case-analysis/factories/make-edit-case-analysis-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import z from "zod";

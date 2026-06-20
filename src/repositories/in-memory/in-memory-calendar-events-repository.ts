@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { CalendarEvent, Prisma } from "@generated/prisma/client";
-import type { CalendarEventsRepository } from "@/repositories/calendar-events-repository";
+import { CalendarEventsRepository } from "@/instance/repositories/calendar-events-repository";
 
 export class InMemoryCalendarEventsRepository implements CalendarEventsRepository {
 	items: CalendarEvent[] = [];

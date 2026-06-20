@@ -1,10 +1,10 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { CalendarConnectionNotFoundError } from "@/use-cases/calendar/errors/calendar-connection-not-found-error";
-import { GoogleCalendarIntegrationError } from "@/use-cases/calendar/errors/google-calendar-integration-error";
-import { makeFetchCalendarEventsUseCase } from "@/use-cases/calendar/factories/make-fetch-calendar-events-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeFetchCalendarEventsUseCase } from "@/instance/use-cases/calendar/factories/make-fetch-calendar-events-use-case";
+import { CalendarConnectionNotFoundError } from "@/instance/use-cases/calendar/errors/calendar-connection-not-found-error";
+import { GoogleCalendarIntegrationError } from "@/instance/use-cases/calendar/errors/google-calendar-integration-error";
 
 const MAX_EVENTS_PER_REQUEST = 50;
 

@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { CaseAnalysis, Prisma } from "@generated/prisma/client";
-import type { CaseAnalysisRepository } from "@/repositories/case-analysis-repository";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import type { PaginationParams } from "@/utils/pagination-params";
+import { CaseAnalysisRepository } from "@/instance/repositories/case-analysis-repository";
 
 export class InMemoryCaseAnalysisRepository implements CaseAnalysisRepository {
 	private items: CaseAnalysis[] = [];

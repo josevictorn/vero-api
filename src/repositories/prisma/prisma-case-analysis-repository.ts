@@ -3,8 +3,8 @@ import { PaginationParams } from "@/utils/pagination-params";
 import { CaseAnalysis } from "@generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { CaseAnalysisUncheckedCreateInput } from "@generated/prisma/models";
-import { CaseAnalysisRepository } from "../case-analysis-repository";
 import { ITEM_PER_PAGE } from "@/utils/constants";
+import { CaseAnalysisRepository } from "@/instance/repositories/case-analysis-repository";
 
 
 export class PrismaCaseAnalysisRepository implements CaseAnalysisRepository {

@@ -1,9 +1,9 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { ClientNotFoundError } from "@/use-cases/clients/errors/client-not-found-error";
-import { makeGetClientUseCase } from "@/use-cases/clients/factories/make-get-client-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeGetClientUseCase } from "@/instance/use-cases/clients/factories/make-get-client-use-case";
+import { ClientNotFoundError } from "@/instance/use-cases/clients/errors/client-not-found-error";
 
 export const GetClientController: FastifyPluginAsyncZod = async (app) => {
 	app.get(

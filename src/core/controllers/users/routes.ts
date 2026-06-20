@@ -1,0 +1,16 @@
+import type { FastifyInstance } from "fastify";
+import { AuthenticateController } from "./authenticate";
+import { EditUserController } from "./edit";
+import { FetchUsersController } from "./fetch";
+import { GetUsersController } from "./get";
+import { ProfileController } from "./profile";
+import { RegisterUserController } from "./register";
+
+export async function usersRoutes(app: FastifyInstance) {
+	await app.register(RegisterUserController);
+	await app.register(AuthenticateController);
+	await app.register(ProfileController);
+	await app.register(FetchUsersController);
+	await app.register(EditUserController);
+	await app.register(GetUsersController);
+}

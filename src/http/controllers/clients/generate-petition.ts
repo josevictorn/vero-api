@@ -1,9 +1,9 @@
+import { LawyerNotFoundError } from "@/core/use-cases/leads/errors/lawyer-not-found-error";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { CaseAnalysisNotFoundError } from "@/use-cases/case-analysis/errors/case-analysis-not-found-error";
-import { ClientNotFoundError } from "@/use-cases/clients/errors/client-not-found-error";
-import { GoogleDocsIntegrationError } from "@/use-cases/clients/errors/google-docs-integration-error";
-import { makeGeneratePetitionUseCase } from "@/use-cases/clients/factories/make-generate-petition";
-import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
+import { CaseAnalysisNotFoundError } from "@/instance/use-cases/case-analysis/errors/case-analysis-not-found-error";
+import { ClientNotFoundError } from "@/instance/use-cases/clients/errors/client-not-found-error";
+import { GoogleDocsIntegrationError } from "@/instance/use-cases/clients/errors/google-docs-integration-error";
+import { makeGeneratePetitionUseCase } from "@/instance/use-cases/clients/factories/make-generate-petition";
 import { HTTP_STATUS } from "@/utils/constants";
 import { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";

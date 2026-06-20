@@ -1,12 +1,12 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { LawyerAlreadyExistsError } from "@/use-cases/lawyers/errors/lawyer-already-exists-error";
-import { LawyerNotFoundError } from "@/use-cases/lawyers/errors/lawyer-not-found-error";
-import { UserNotFoundError } from "@/use-cases/lawyers/errors/user-not-found-error";
-import { WorkspaceNotFoundError } from "@/use-cases/lawyers/errors/workspace-not-found-error";
-import { makeEditLawyerUseCase } from "@/use-cases/lawyers/factories/make-edit-lawyer-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeEditLawyerUseCase } from "@/instance/use-cases/lawyers/factories/make-edit-lawyer-use-case";
+import { LawyerNotFoundError } from "@/instance/use-cases/lawyers/errors/lawyer-not-found-error";
+import { UserNotFoundError } from "@/core/use-cases/users/errors/user-not-found-error";
+import { WorkspaceNotFoundError } from "@/core/use-cases/workspaces/errors/workspace-not-found-error";
+import { LawyerAlreadyExistsError } from "@/instance/use-cases/lawyers/errors/lawyer-already-exists-error";
 
 const CELLPHONE_MIN_LENGTH = 10;
 

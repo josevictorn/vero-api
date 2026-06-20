@@ -1,11 +1,11 @@
 import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { CalendarConnectionNotFoundError } from "@/use-cases/calendar/errors/calendar-connection-not-found-error";
-import { CalendarEventNotFoundError } from "@/use-cases/calendar/errors/calendar-event-not-found-error";
-import { GoogleCalendarIntegrationError } from "@/use-cases/calendar/errors/google-calendar-integration-error";
-import { makeGetCalendarEventUseCase } from "@/use-cases/calendar/factories/make-get-calendar-event-use-case";
 import { HTTP_STATUS } from "@/utils/constants";
+import { makeGetCalendarEventUseCase } from "@/instance/use-cases/calendar/factories/make-get-calendar-event-use-case";
+import { CalendarConnectionNotFoundError } from "@/instance/use-cases/calendar/errors/calendar-connection-not-found-error";
+import { CalendarEventNotFoundError } from "@/instance/use-cases/calendar/errors/calendar-event-not-found-error";
+import { GoogleCalendarIntegrationError } from "@/instance/use-cases/calendar/errors/google-calendar-integration-error";
 
 export const GetCalendarEventController: FastifyPluginAsyncZod = async (
 	app

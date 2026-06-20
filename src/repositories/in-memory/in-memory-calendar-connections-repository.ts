@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { GoogleCalendarConnection, Prisma } from "@generated/prisma/client";
-import type { CalendarConnectionsRepository } from "@/repositories/calendar-connections-repository";
+import { CalendarConnectionsRepository } from "@/instance/repositories/calendar-connections-repository";
 
 export class InMemoryCalendarConnectionsRepository
 	implements CalendarConnectionsRepository

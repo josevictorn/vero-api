@@ -1,6 +1,6 @@
 import type { Prisma } from "@generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { CalendarEventsRepository } from "@/repositories/calendar-events-repository";
+import { CalendarEventsRepository } from "@/instance/repositories/calendar-events-repository";
 
 export class PrismaCalendarEventsRepository
 	implements CalendarEventsRepository
