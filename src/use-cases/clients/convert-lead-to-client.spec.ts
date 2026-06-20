@@ -114,7 +114,7 @@ describe("Convert Lead To Client Use Case", () => {
 
 		await clientsRepository.create({
 			name: lead.name,
-			email: lead.email,
+			email: lead.email as string,
 			cellphone: lead.cellphone,
 			...baseClientData,
 			workspaceId: lead.workspaceId,

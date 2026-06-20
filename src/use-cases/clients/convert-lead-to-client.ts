@@ -69,7 +69,7 @@ export class ConvertLeadToClientUseCase {
 
 		const client = await this.clientsRepository.create({
 			name: lead.name,
-			email: lead.email,
+			email: lead.email as string,
 			cellphone: lead.cellphone,
 			maritalStatus,
 			profession,
