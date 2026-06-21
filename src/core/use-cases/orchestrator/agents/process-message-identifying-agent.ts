@@ -9,6 +9,7 @@ import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
 import type { ChatMessage } from "@/core/agents/types/chat-message";
 import type { IdentifierAgent } from "@/core/agents/ports/identifier-agent.port";
 import type { ChatMemoryPort } from "@/core/agents/ports/chat-memory.port";
+import type { StatusTransitionMap } from "@/core/orchestrator/session-status-handler";
 
 interface ProcessMessageIdentifyingAgentRequest {
 	aiSession: AiSession;
@@ -34,6 +35,8 @@ export class ProcessMessageIdentifyingAgentUseCase {
 		private readonly identifierAgent: IdentifierAgent,
 		private readonly chatMemoryProvider: ChatMemoryPort,
 		private readonly workspaceLabel: string,
+		/** Mapa de hooks de transição de status fornecido pela instância. */
+		private readonly onStatusTransition?: StatusTransitionMap,
 	) {}
 
 	async execute({
@@ -94,12 +97,20 @@ export class ProcessMessageIdentifyingAgentUseCase {
 			);
 		}
 
+		const previousStatus = aiSession.status;
 		aiSession.status = "INTERVIEWING";
 		aiSession.screeningFlowId = matchedFlow.id;
 		aiSession.name = agentOutput.contactName;
 		aiSession.isThirdParty = agentOutput.isThirdParty;
 
 		await this.aiSessionRepository.save(aiSession);
+
+		await this.onStatusTransition?.["INTERVIEWING"]?.({
+			previousStatus,
+			newStatus: "INTERVIEWING",
+			aiSession,
+			contactName: agentOutput.contactName,
+		});
 
 		return right({
 			messageToClient: agentOutput.messageToClient,

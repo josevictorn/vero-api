@@ -18,5 +18,6 @@ export function makeProcessMessageIdentifyingAgentUseCase(config: InstanceConfig
 		config.agents.identifier,
 		chatMemoryProvider,
 		config.workspaceLabel,
+		config.onStatusTransition,
 	);
 }

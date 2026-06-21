@@ -75,6 +75,8 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 					.send({ received: true });
 			}
 
+			console.log(messageText);
+
 			const phoneNumber = extractPhoneNumber(payload.data.key.remoteJid);
 			const contactName = payload.data.pushName ?? "";
 			const chatId = payload.data.key.remoteJid;

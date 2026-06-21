@@ -14,6 +14,6 @@ export function makeProcessInterviewInterviewerAgentUseCase(config: InstanceConf
 		aiSessionRepository,
 		config.agents.interviewer,
 		chatMemoryProvider,
-		config.onScreeningCompleted,
+		config.onStatusTransition,
 	);
 }

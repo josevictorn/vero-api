@@ -1,20 +1,7 @@
 import type { AiSession } from "@generated/prisma/client";
 import type { IdentifierAgent } from "@core/agents/ports/identifier-agent.port";
 import type { InterviewerAgent } from "@core/agents/ports/interviewer-agent.port";
-import type { StatusHandlerMap } from "@core/orchestrator/session-status-handler";
-import type { CollectedDataItem } from "@core/agents/types/collected-data-item";
-
-/**
- * Contexto fornecido ao hook `onScreeningCompleted` após o agente entrevistador
- * concluir a coleta de dados com o lead.
- */
-export interface ScreeningCompletedContext {
-	aiSession: AiSession;
-	leadId: string;
-	contactName: string;
-	collectedData: CollectedDataItem[];
-	today: string;
-}
+import type { StatusHandlerMap, StatusTransitionMap } from "@core/orchestrator/session-status-handler";
 
 /**
  * Contrato que cada instância do framework deve implementar.
@@ -30,7 +17,10 @@ export interface ScreeningCompletedContext {
  *   agents: { identifier: new GeminiIdentifierAgent(), interviewer: new GeminiInterviewerAgent() },
  *   terminalStatuses: ["BOOKED"],
  *   statusHandlers: { IDENTIFYING: ..., INTERVIEWING: ..., BOOKED: ... },
- *   onScreeningCompleted: async (ctx) => { ... },
+ *   onStatusTransition: {
+ *     INTERVIEWING: async (ctx) => notificationService.notify(ctx),
+ *     FORWARDED: async (ctx) => analyzerUseCase.execute(ctx),
+ *   },
  * };
  */
 export interface InstanceConfig {
@@ -63,13 +53,21 @@ export interface InstanceConfig {
 	statusHandlers: StatusHandlerMap;
 
 	/**
-	 * Hook opcional chamado pelo core imediatamente após o agente entrevistador
-	 * concluir a triagem (quando `screeningCompleted === true`).
+	 * Mapa de novo-status → hook executado imediatamente após o core
+	 * persistir uma transição de status na sessão de IA.
+	 *
+	 * Permite que instâncias reajam a qualquer mudança de estado sem
+	 * modificar o core — cada chave é o status de destino da transição.
 	 *
 	 * Use este hook para executar lógicas específicas do domínio:
-	 * - Advocacia: gerar análise jurídica do caso
-	 * - Clínica: gerar ficha do paciente
-	 * - Construtora: criar orçamento preliminar
+	 * - `INTERVIEWING`: notificar o time que um lead foi identificado
+	 * - `FORWARDED`: gerar análise jurídica / ficha de paciente / orçamento
+	 * - `BOOKING`: iniciar fluxo de agendamento externo
+	 *
+	 * @example
+	 * onStatusTransition: {
+	 *   FORWARDED: async (ctx) => analyzerUseCase.execute(ctx),
+	 * }
 	 */
-	onScreeningCompleted?: (ctx: ScreeningCompletedContext) => Promise<void>;
+	onStatusTransition?: StatusTransitionMap;
 }

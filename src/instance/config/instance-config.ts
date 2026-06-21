@@ -34,8 +34,7 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 			interviewer: new GeminiInterviewerAgent(),
 		},
 		terminalStatuses: [LAW_FIRM_STATUS.BOOKED],
-		onScreeningCompleted: (ctx) => analyzerUseCase.execute(ctx),
-	} satisfies Omit<InstanceConfig, "statusHandlers">;
+	} satisfies Omit<InstanceConfig, "statusHandlers" | "onStatusTransition">;
 
 	// Monta os use cases do core passando a config (sem os handlers ainda)
 	const identifyingUseCase = makeProcessMessageIdentifyingAgentUseCase(
@@ -85,6 +84,14 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 
 			/** Já agendado — silencioso (nova mensagem reiniciará a sessão) */
 			[LAW_FIRM_STATUS.BOOKED]: async () => right({ reply: "" }),
+		},
+		/**
+		 * Hooks de transição de status específicos do domínio jurídico.
+		 * Executados pelo core imediatamente após cada mudança de status ser persistida.
+		 */
+		onStatusTransition: {
+			/** Quando a triagem é concluída e o caso é encaminhado, gera a análise jurídica. */
+			[LAW_FIRM_STATUS.FORWARDED]: async (ctx) => analyzerUseCase.execute(ctx),
 		},
 	};
 

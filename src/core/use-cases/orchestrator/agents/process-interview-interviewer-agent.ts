@@ -8,7 +8,7 @@ import type { ChatMemoryPort } from "@/core/agents/ports/chat-memory.port";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
 import type { ChatMessage } from "@/core/agents/types/chat-message";
 import type { CollectedDataItem } from "@/core/agents/types/collected-data-item";
-import type { ScreeningCompletedContext } from "@/core/config/instance-config.port";
+import type { StatusTransitionMap } from "@/core/orchestrator/session-status-handler";
 
 interface ProcessInterviewInterviewerAgentRequest {
 	aiSession: AiSession;
@@ -45,8 +45,8 @@ export class ProcessInterviewInterviewerAgentUseCase {
 		private readonly aiSessionRepository: AiSessionRepository,
 		private readonly interviewerAgent: InterviewerAgent,
 		private readonly chatMemoryProvider: ChatMemoryPort,
-		/** Hook opcional da instância para executar lógica pós-triagem (ex: análise jurídica). */
-		private readonly onScreeningCompleted?: (ctx: ScreeningCompletedContext) => Promise<void>,
+		/** Mapa de hooks de transição de status fornecido pela instância. */
+		private readonly onStatusTransition?: StatusTransitionMap,
 	) {}
 
 	async execute({
@@ -106,20 +106,18 @@ export class ProcessInterviewInterviewerAgentUseCase {
 			});
 		}
 
-		// Triagem concluída: invocar o hook da instância (se fornecido)
-		if (aiSession.leadId && this.onScreeningCompleted) {
-			const ctx: ScreeningCompletedContext = {
-				aiSession,
-				leadId: aiSession.leadId,
-				contactName: agentOutput.contactName,
-				collectedData: agentOutput.collectedData,
-				today,
-			};
-			await this.onScreeningCompleted(ctx);
-		}
-
+		const previousStatus = aiSession.status;
 		aiSession.status = "FORWARDED";
 		await this.aiSessionRepository.save(aiSession);
+
+		await this.onStatusTransition?.["FORWARDED"]?.({
+			previousStatus,
+			newStatus: "FORWARDED",
+			aiSession,
+			collectedData: agentOutput.collectedData,
+			contactName: agentOutput.contactName,
+			today,
+		});
 
 		return right({
 			messageToClient: agentOutput.nextQuestionToClient,
