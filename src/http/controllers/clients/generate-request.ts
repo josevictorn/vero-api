@@ -1,5 +1,5 @@
 import { verifyJWT } from "@/http/middlewares/verify-jwt";
-import { CaseAnalysisNotFoundError } from "@/instance/use-cases/case-analysis/errors/case-analysis-not-found-error";
+import { ScreeningReportNotFoundError } from "@/core/use-cases/screening-report/errors/screening-report-not-found-error";
 import { ClientNotFoundError } from "@/instance/use-cases/clients/errors/client-not-found-error";
 import { GoogleDocsIntegrationError } from "@/instance/use-cases/clients/errors/google-docs-integration-error";
 import { makeGenerateRequestUseCase } from "@/instance/use-cases/clients/factories/make-generate-request";
@@ -20,7 +20,7 @@ export const GenerateRequestController: FastifyPluginAsyncZod = async (app) => {
 					id: z.uuid(),
 				}),
                 body: z.object({
-                    caseAnalysisId: z.uuid(),
+                    screeningReportId: z.uuid(),
                 }),
 				response: {
 					200: z.object({
@@ -34,13 +34,13 @@ export const GenerateRequestController: FastifyPluginAsyncZod = async (app) => {
         },
         async (request, reply) => {
             const { id } = request.params;
-            const { caseAnalysisId } = request.body;
+            const { screeningReportId } = request.body;
             const generateRequestUseCase = makeGenerateRequestUseCase();
 
             const result = await generateRequestUseCase.execute({
                 clientId: id,
                 userId: request.user.sub,
-                caseAnalysisId,
+                screeningReportId,
             });
 
             if (result.isLeft()) {
@@ -59,7 +59,7 @@ export const GenerateRequestController: FastifyPluginAsyncZod = async (app) => {
                         return reply.status(HTTP_STATUS.BAD_REQUEST).send({
                             message: error.message,
                     });
-                    case CaseAnalysisNotFoundError:
+                    case ScreeningReportNotFoundError:
                         return reply.status(HTTP_STATUS.BAD_REQUEST).send({
                             message: error.message,
                     });

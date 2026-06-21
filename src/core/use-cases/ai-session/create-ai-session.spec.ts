@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { AiSessionStatus } from "@generated/prisma/client";
+
 import { InMemoryAiSessionRepository } from "@/core/repositories/in-memory/in-memory-ai-session-repository";
 import { InMemoryScreeningFlowsRepository } from "@/core/repositories/in-memory/in-memory-screening-flows-repository";
 import { CreateAiSessionUseCase } from "./create-ai-session";
@@ -22,7 +22,7 @@ describe("Create AI Session Use Case", () => {
 	it("should be able to create an ai session", async () => {
 		const result = await sut.execute({
 			chatId: "chat-123",
-			status: AiSessionStatus.IDENTIFYING,
+			status: "IDENTIFYING",
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999998877",
@@ -34,7 +34,7 @@ describe("Create AI Session Use Case", () => {
 			expect(result.value.aiSession).toEqual(
 				expect.objectContaining({
 					chatId: "chat-123",
-					status: AiSessionStatus.IDENTIFYING,
+					status: "IDENTIFYING",
 					name: "John Doe",
 				})
 			);
@@ -50,7 +50,7 @@ describe("Create AI Session Use Case", () => {
 		const result = await sut.execute({
 			screeningFlowId: screeningFlow.id,
 			chatId: "chat-456",
-			status: AiSessionStatus.IDENTIFYING,
+			status: "IDENTIFYING",
 			chatState: { step: 1 },
 			name: "Jane Doe",
 			cellphone: "11999998866",
@@ -72,7 +72,7 @@ describe("Create AI Session Use Case", () => {
 		const result = await sut.execute({
 			screeningFlowId: "non-existing-flow",
 			chatId: "chat-789",
-			status: AiSessionStatus.IDENTIFYING,
+			status: "IDENTIFYING",
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999998877",

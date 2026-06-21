@@ -4,25 +4,25 @@ import { type Either, left, right } from "@/utils/either";
 import { ClientNotFoundError } from "./errors/client-not-found-error";
 import { LawyerNotFoundError } from "../lawyers/errors/lawyer-not-found-error";
 import { GoogleDocsIntegrationError } from "./errors/google-docs-integration-error";
-import { CaseAnalysisNotFoundError } from "../case-analysis/errors/case-analysis-not-found-error";
+import { ScreeningReportNotFoundError } from "@/core/use-cases/screening-report/errors/screening-report-not-found-error";
 import { ensureGoogleAccessToken } from "../calendar/ensure-google-access-token";
 import {env} from "@/env";
 import { ClientsRepository } from "@/instance/repositories/clients-repository";
 import { LawyersRepository } from "@/instance/repositories/lawyers-repository";
-import { CaseAnalysisRepository } from "@/instance/repositories/case-analysis-repository";
+import { ScreeningReportRepository } from "@/core/repositories/screening-report-repository";
 import { CalendarConnectionsRepository } from "@/instance/repositories/calendar-connections-repository";
 
 interface GeneratePetitionUseCaseRequest {
     clientId: string;
     userId: string;
-    caseAnalysisId: string;
+    screeningReportId: string;
 }
 
 type GeneratePetitionUseCaseResponse = Either<
     | ClientNotFoundError
     | LawyerNotFoundError
-    | GoogleDocsIntegrationError 
-    | CaseAnalysisNotFoundError,
+    | GoogleDocsIntegrationError
+    | ScreeningReportNotFoundError,
 	{ petitionUrl: string }
 >;
 
@@ -30,7 +30,7 @@ export class GeneratePetitionUseCase {
     constructor(
         private readonly clientsRepository: ClientsRepository,
         private readonly lawyersRepository: LawyersRepository,
-        private readonly caseAnalysisRepository: CaseAnalysisRepository,
+        private readonly screeningReportRepository: ScreeningReportRepository,
         private readonly driveDocsGateway: DriveDocsGateway,
         private readonly calendarConnectionsRepository: CalendarConnectionsRepository,
         private readonly calendarGateway: CalendarGateway
@@ -39,7 +39,7 @@ export class GeneratePetitionUseCase {
     async execute({
         clientId, 
         userId,
-        caseAnalysisId
+        screeningReportId
     }: GeneratePetitionUseCaseRequest): Promise<GeneratePetitionUseCaseResponse> {
         const connection = await this.calendarConnectionsRepository.findByUserId(userId);
 
@@ -65,11 +65,14 @@ export class GeneratePetitionUseCase {
 			return left(new LawyerNotFoundError(client.lawyerId));
 		}
 
-        const caseAnalysis = await this.caseAnalysisRepository.findById(caseAnalysisId);
+        const screeningReport = await this.screeningReportRepository.findById(screeningReportId);
         
-        if (!caseAnalysis) {
-            return left(new CaseAnalysisNotFoundError(caseAnalysisId));
+        if (!screeningReport) {
+            return left(new ScreeningReportNotFoundError(screeningReportId));
         }
+
+        // Extrair campos jurídicos do campo `data` genérico
+        const reportData = screeningReport.data as Record<string, string>;
 
         const documentName = `Petição - ${client.name}`;
 
@@ -90,14 +93,14 @@ export class GeneratePetitionUseCase {
           cep_cliente:              client.zipCode,
           email_cliente:            client.email,
 
-          TITULO_DA_ACAO:           caseAnalysis.title,
+          TITULO_DA_ACAO:           screeningReport.title,
 
           NOME_REU:                 "",
           qualificacao_reu:         "",
           endereco_reu:             "",
 
-          texto_dos_fatos:          caseAnalysis.analysisText,
-          texto_fundamentacao_juridica: caseAnalysis.mainLegalBase,
+          texto_dos_fatos:          reportData.analysisText ?? "",
+          texto_fundamentacao_juridica: reportData.mainLegalBase ?? "",
           interesse_conciliacao:    "",
           texto_dos_pedidos:        "",
           valor_da_causa:           "",

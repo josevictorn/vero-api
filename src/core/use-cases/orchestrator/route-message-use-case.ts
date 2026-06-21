@@ -1,68 +1,47 @@
 import { right, left, Either } from "@/utils/either";
-import { AiSessionStatus } from "@generated/prisma/enums";
 import { AiSession } from "@generated/prisma/client";
 import { UnknownStatusError } from "./errors/unknown-status-error";
-import { WorkspaceNotConfiguredError } from "./agents/errors/workspace-not-configured-error";
-import { ScreeningFlowNotMatchedError } from "./agents/errors/screening-flow-not-matched-error";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
-import { ProcessInterviewInterviewerAgentUseCase } from "./agents/process-interview-interviewer-agent";
-import { ProcessMessageIdentifyingAgentUseCase } from "./agents/process-message-identifying-agent";
+import type { StatusHandlerMap } from "@core/orchestrator/session-status-handler";
 
 interface RouteMessageRequest {
     aiSession: AiSession,
     messageText: string,
-    today?: Date
 }
 
 type RouteMessageResponse = Either<
-    WorkspaceNotConfiguredError |
-    ScreeningFlowNotMatchedError |
-    AgentResponseError,
+    UnknownStatusError | AgentResponseError,
     { messageToClient: string }
 >
 
+/**
+ * Roteia uma mensagem recebida para o handler correto baseado no status da sessão.
+ *
+ * O mapa de handlers é fornecido integralmente pela instância via `InstanceConfig.statusHandlers`.
+ * O core não conhece nenhum status específico — apenas delega.
+ */
 export class RouteMessageUseCase {
     constructor(
-        private readonly identifyingUseCase: ProcessMessageIdentifyingAgentUseCase,
-        private readonly interviewingUseCase: ProcessInterviewInterviewerAgentUseCase
+        private readonly statusHandlers: StatusHandlerMap,
     ) {}
 
     async execute({ aiSession, messageText }: RouteMessageRequest): Promise<RouteMessageResponse> {
-        
-        const strategies: Record<string, () => Promise<RouteMessageResponse>> = {
-            [AiSessionStatus.IDENTIFYING]: () => this.identifyingUseCase.execute({ 
-                aiSession, 
-                messageText 
-            }),
-            [AiSessionStatus.INTERVIEWING]: () => {
-                const today = new Date().toLocaleDateString("pt-BR", {
-                    weekday: "long", year: "numeric", month: "long", day: "numeric",
-                });
-                return this.interviewingUseCase.execute({ 
-                    aiSession, 
-                    messageText, 
-                    today 
-                });
-            },
-            [AiSessionStatus.FORWARDED]: async () => right({ messageToClient: "" }),
-            [AiSessionStatus.BOOKING]: async () => right({ messageToClient: "" }),
-            [AiSessionStatus.BOOKED]: async () => right({ messageToClient: "" }),
-        };
+        const handler = this.statusHandlers[aiSession.status];
 
-        const processMessageStrategy = strategies[aiSession.status];
-
-        if (!processMessageStrategy) {
-            return left(new UnknownStatusError);
+        if (!handler) {
+            return left(new UnknownStatusError());
         }
 
-        const result = await processMessageStrategy();
+        const result = await handler(aiSession, messageText, {
+            workspaceName: aiSession.name,
+        });
 
         if (result.isLeft()) {
             return left(result.value);
         }
 
         return right({
-            messageToClient: result.value?.messageToClient
+            messageToClient: result.value?.reply ?? "",
         });
     }
 }

@@ -2,7 +2,7 @@ import { CollectedDataItem } from "@/providers/agents/types/collected-data-item"
 
 interface InterviewerPromptParams {
     isThirdParty: boolean;
-    clientName: string;
+    contactName: string;
     caseCategory: string;
     questions: Record<string, string>;
     collectedData: CollectedDataItem[];
@@ -11,7 +11,7 @@ interface InterviewerPromptParams {
 
 export function buildInterviewerSystemPrompt({
     isThirdParty,
-    clientName,
+    contactName,
     caseCategory,
     questions,
     collectedData,
@@ -31,7 +31,7 @@ Você está conversando no WhatsApp. Ninguém gosta de ler textos longos ou rob�
 
 ## CONTEXTO DA CONVERSA (INJETADO PELO SISTEMA)
 - É para terceiros: ${isThirdParty}
-- Nome cliente: ${clientName}
+- Nome cliente: ${contactName}
 - Categoria do Caso: ${caseCategory}
 - Roteiro de Perguntas (O que precisamos descobrir OBRIGATORIAMENTE):
 ${questionsFormatted}
@@ -51,7 +51,7 @@ ${questionsFormatted}
 
 ## FORMATO DE SAÍDA OBRIGATÓRIO (JSON):
 {
-  "clientName": "Nome de quem precisa do benefício",
+  "contactName": "Nome de quem precisa do benefício",
   "nextQuestionToClient": "Sua pergunta curta e direta aqui.",
   "collectedData": [
     { "field": "[A CHAVE EXATA MOSTRADA NO ROTEIRO]", "answer": "Resposta extraída, deduzida, ou 'ainda_nao_perguntado'" }

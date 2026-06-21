@@ -24,6 +24,7 @@ export class InMemoryScreeningFlowsRepository
 			id: randomUUID(),
 			caseType: data.caseType,
 			questions: data.questions as Prisma.JsonValue,
+			lawyerId: null,
 			createdAt: new Date(),
 		};
 

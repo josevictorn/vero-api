@@ -6,10 +6,10 @@ import type {
 	IdentifierAgent,
 	IdentifierAgentInput,
 	IdentifierAgentOutput,
-} from "./identifier-agent";
+} from "@core/agents/ports/identifier-agent.port";
 import { buildIdentifierSystemPrompt } from "./identifier-prompt";
-import { ChatMessage } from "@/providers/agents/types/chat-message";
-import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
+import type { ChatMessage } from "@core/agents/types/chat-message";
+import { AgentResponseError } from "@core/agents/errors/agent-response-error";
 
 const AGENT_NAME = "identifier";
 const MODEL = "gemini-3-flash-preview";
@@ -18,7 +18,7 @@ const identifierResponseSchema = z.object({
 	messageToClient: z.string(),
 	identifiedCategory: z.string(),
 	isThirdParty: z.boolean(),
-	fullName: z.string(),
+	contactName: z.string(),
 });
 
 const identifierJsonSchema = {
@@ -38,13 +38,13 @@ const identifierJsonSchema = {
 			description:
 				"True se o contato é em nome de outra pessoa, False se for para si mesmo.",
 		},
-		fullName: {
+		contactName: {
 			type: Type.STRING,
 			description:
 				"O nome completo da pessoa ou 'nao_identificado' se ainda não souber.",
 		},
 	},
-	required: ["messageToClient", "identifiedCategory", "isThirdParty", "fullName"],
+	required: ["messageToClient", "identifiedCategory", "isThirdParty", "contactName"],
 };
 
 function buildContents(chatHistory: ChatMessage[], message: string) {
@@ -63,7 +63,7 @@ export class GeminiIdentifierAgent implements IdentifierAgent {
 		input: IdentifierAgentInput,
 	): Promise<Either<AgentResponseError, IdentifierAgentOutput>> {
 		const systemInstruction = buildIdentifierSystemPrompt({
-			officeName: input.officeName,
+			workspaceLabel: input.workspaceLabel,
 			caseTypes: input.caseTypes,
 		});
 

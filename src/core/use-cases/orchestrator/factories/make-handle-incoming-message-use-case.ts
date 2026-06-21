@@ -4,14 +4,16 @@ import { makeGetAiSessionByChatIdUseCase } from "../../ai-session/factories/make
 import { makeCreateLeadUseCase } from "../../leads/factories/make-create-lead-use-case";
 import { makeFetchWorkspacesUseCase } from "../../workspaces/factories/make-fetch-workspaces-use-case";
 import { HandleIncomingMessageUseCase } from "../handle-incoming-message";
+import type { InstanceConfig } from "@/core/config/instance-config.port";
 
 
-export function makeHandleIncomingMessageUseCase() {
+export function makeHandleIncomingMessageUseCase(config: InstanceConfig) {
     return new HandleIncomingMessageUseCase(
         makeGetAiSessionByChatIdUseCase(),
         makeCreateAiSessionUseCase(),
         makeCreateLeadUseCase(),
         makeFetchWorkspacesUseCase(),
-        makeEditAiSessionUseCase()
+        makeEditAiSessionUseCase(),
+        config.terminalStatuses,
     )
 }

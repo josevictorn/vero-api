@@ -13,7 +13,8 @@ import { WorkspaceNotConfiguredError } from "@/core/use-cases/orchestrator/agent
 import { ScreeningFlowNotFoundError } from "@/core/use-cases/screening-flows/errors/screening-flow-not-found-error";
 import { ScreeningFlowNotMatchedError } from "@/core/use-cases/orchestrator/agents/errors/screening-flow-not-matched-error";
 import { makeRouteMessageUseCase } from "@/core/use-cases/orchestrator/factories/make-route-message-use-case";
-import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
+import { AgentResponseError } from "@core/agents/errors/agent-response-error";
+import { lawFirmInstanceConfig } from "@instance/config/instance-config";
 
 export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 	app,
@@ -78,7 +79,7 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 			const contactName = payload.data.pushName ?? "";
 			const chatId = payload.data.key.remoteJid;
 			
-			const handleIncomingMessageUseCase = makeHandleIncomingMessageUseCase();
+			const handleIncomingMessageUseCase = makeHandleIncomingMessageUseCase(lawFirmInstanceConfig);
 
 			const activeSessionResult = await handleIncomingMessageUseCase.execute({
 				phoneNumber,
@@ -107,7 +108,7 @@ export const EvolutionWebhookController: FastifyPluginAsyncZod = async (
 
 			const activeSession = activeSessionResult.value.aiSession;
 
-			const routeMessageUseCase = makeRouteMessageUseCase()
+			const routeMessageUseCase = makeRouteMessageUseCase(lawFirmInstanceConfig);
 			const routeMessageResult = await routeMessageUseCase.execute({
 				aiSession: activeSession,
 				messageText: messageText

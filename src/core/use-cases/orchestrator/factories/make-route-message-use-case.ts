@@ -1,11 +1,11 @@
 import { RouteMessageUseCase } from "../route-message-use-case";
-import { makeProcessInterviewInterviewerAgentUseCase } from "../agents/factories/make-process-interview-interviewer-agent";
-import { makeProcessMessageIdentifyingAgentUseCase } from "../agents/factories/make-process-message-identifying-agent";
+import type { InstanceConfig } from "@/core/config/instance-config.port";
 
-
-export function makeRouteMessageUseCase() {
-    return new RouteMessageUseCase(
-        makeProcessMessageIdentifyingAgentUseCase(),
-        makeProcessInterviewInterviewerAgentUseCase()
-    )
+/**
+ * Monta o RouteMessageUseCase injetando o StatusHandlerMap completo da instância.
+ * A instância é responsável por registrar os handlers de todos os status,
+ * incluindo IDENTIFYING e INTERVIEWING (que usarão os use cases do core internamente).
+ */
+export function makeRouteMessageUseCase(config: InstanceConfig) {
+    return new RouteMessageUseCase(config.statusHandlers);
 }

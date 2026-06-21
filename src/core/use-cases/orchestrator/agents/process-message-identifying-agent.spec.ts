@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { AiSessionStatus } from "@generated/prisma/client";
 import { InMemoryAiSessionRepository } from "@/core/repositories/in-memory/in-memory-ai-session-repository";
 import { InMemoryScreeningFlowsRepository } from "@/core/repositories/in-memory/in-memory-screening-flows-repository";
 import { InMemoryWorkspacesRepository } from "@/core/repositories/in-memory/in-memory-workspaces-repository";
@@ -8,15 +7,15 @@ import { right, left, type Either } from "@/utils/either";
 import { ProcessMessageIdentifyingAgentUseCase } from "./process-message-identifying-agent";
 import { WorkspaceNotConfiguredError } from "./errors/workspace-not-configured-error";
 import { ScreeningFlowNotMatchedError } from "./errors/screening-flow-not-matched-error";
-import { IdentifierAgent, IdentifierAgentInput, IdentifierAgentOutput } from "@/providers/agents/identifier/identifier-agent";
-import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
+import type { IdentifierAgent, IdentifierAgentInput, IdentifierAgentOutput } from "@core/agents/ports/identifier-agent.port";
+import { AgentResponseError } from "@core/agents/errors/agent-response-error";
 
 class MockIdentifierAgent implements IdentifierAgent {
 	public mockOutput: IdentifierAgentOutput = {
 		messageToClient: "Olá! Como posso ajudá-lo?",
 		identifiedCategory: "nao_identificado",
 		isThirdParty: false,
-		fullName: "nao_identificado",
+		contactName: "nao_identificado",
 	};
 
 	public shouldFail = false;
@@ -52,6 +51,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			workspacesRepository,
 			mockAgent,
 			chatMemoryProvider,
+			"escritório de advocacia",
 		);
 
 		await workspacesRepository.create({
@@ -84,7 +84,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Olá! Qual é o seu nome completo?",
 			identifiedCategory: "nao_identificado",
 			isThirdParty: false,
-			fullName: "nao_identificado",
+			contactName: "nao_identificado",
 		};
 
 		const result = await sut.execute({
@@ -114,7 +114,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Entendi! E qual o seu nome completo?",
 			identifiedCategory: "Trabalhista",
 			isThirdParty: false,
-			fullName: "nao_identificado",
+			contactName: "nao_identificado",
 		};
 
 		const result = await sut.execute({
@@ -142,7 +142,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 				"Vi que é um caso Trabalhista. Vou fazer algumas perguntas para enviar ao advogado.",
 			identifiedCategory: "Trabalhista",
 			isThirdParty: false,
-			fullName: "João da Silva",
+			contactName: "João da Silva",
 		};
 
 		const result = await sut.execute({
@@ -158,7 +158,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 		}
 
 		const updatedSession = await aiSessionRepository.findById(aiSession.id);
-		expect(updatedSession?.status).toBe(AiSessionStatus.INTERVIEWING);
+		expect(updatedSession?.status).toBe("INTERVIEWING");
 		expect(updatedSession?.name).toBe("João da Silva");
 		expect(updatedSession?.isThirdParty).toBe(false);
 		expect(updatedSession?.screeningFlowId).toBeTruthy();
@@ -176,7 +176,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Entendido, caso Previdenciário.",
 			identifiedCategory: "Previdenciário",
 			isThirdParty: true,
-			fullName: "Maria Souza",
+			contactName: "Maria Souza",
 		};
 
 		const result = await sut.execute({
@@ -210,7 +210,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Olá! Qual seu nome?",
 			identifiedCategory: "nao_identificado",
 			isThirdParty: false,
-			fullName: "nao_identificado",
+			contactName: "nao_identificado",
 		};
 
 		await sut.execute({
@@ -242,7 +242,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Olá! Qual seu nome?",
 			identifiedCategory: "nao_identificado",
 			isThirdParty: false,
-			fullName: "nao_identificado",
+			contactName: "nao_identificado",
 		};
 
 		await sut.execute({ aiSession, messageText: "Oi" });
@@ -251,7 +251,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "João, como posso te ajudar?",
 			identifiedCategory: "nao_identificado",
 			isThirdParty: false,
-			fullName: "João da Silva",
+			contactName: "João da Silva",
 		};
 
 		await sut.execute({ aiSession, messageText: "Meu nome é João da Silva" });
@@ -325,7 +325,7 @@ describe("ProcessMessageIdentifyingAgentUseCase", () => {
 			messageToClient: "Entendi.",
 			identifiedCategory: "Categoria Inexistente",
 			isThirdParty: false,
-			fullName: "João da Silva",
+			contactName: "João da Silva",
 		};
 
 		const result = await sut.execute({

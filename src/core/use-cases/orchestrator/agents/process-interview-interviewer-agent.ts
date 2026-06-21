@@ -1,15 +1,14 @@
 import type { AiSession, ScreeningFlow } from "@generated/prisma/client";
-import { AiSessionStatus } from "@generated/prisma/client";
 import { type Either, left, right } from "@/utils/either";
 import { ScreeningFlowNotFoundError } from "./errors/screening-flow-not-found-error";
 import { ScreeningFlowsRepository } from "@/core/repositories/screening-flows-repository";
 import { AiSessionRepository } from "@/core/repositories/ai-session-repository";
-import { InterviewerAgent } from "@/core/agents/ports/interviewer-agent.port";
-import { ChatMemoryProvider } from "@/providers/agents/memory/chat-memory-provider";
-import { ProcessMessageCaseAnalyzerAgentUseCase } from "@/instance/use-cases/agents/process-case-case-analyzer-agent";
+import type { InterviewerAgent } from "@/core/agents/ports/interviewer-agent.port";
+import type { ChatMemoryPort } from "@/core/agents/ports/chat-memory.port";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
-import { ChatMessage } from "@/core/agents/types/chat-message";
-import { CollectedDataItem } from "@/core/agents/types/collected-data-item";
+import type { ChatMessage } from "@/core/agents/types/chat-message";
+import type { CollectedDataItem } from "@/core/agents/types/collected-data-item";
+import type { ScreeningCompletedContext } from "@/core/config/instance-config.port";
 
 interface ProcessInterviewInterviewerAgentRequest {
 	aiSession: AiSession;
@@ -30,7 +29,7 @@ function parseCollectedData(chatState: AiSession["chatState"]): CollectedDataIte
 	if (!chatState || !Array.isArray(chatState)) {
 		return [];
 	}
-	return chatState as CollectedDataItem[];
+	return chatState as unknown as CollectedDataItem[];
 }
 
 function parseQuestions(questions: ScreeningFlow["questions"]): Record<string, string> {
@@ -45,8 +44,9 @@ export class ProcessInterviewInterviewerAgentUseCase {
 		private readonly screeningFlowsRepository: ScreeningFlowsRepository,
 		private readonly aiSessionRepository: AiSessionRepository,
 		private readonly interviewerAgent: InterviewerAgent,
-		private readonly chatMemoryProvider: ChatMemoryProvider,
-		private readonly caseAnalyzerUseCase: ProcessMessageCaseAnalyzerAgentUseCase,
+		private readonly chatMemoryProvider: ChatMemoryPort,
+		/** Hook opcional da instância para executar lógica pós-triagem (ex: análise jurídica). */
+		private readonly onScreeningCompleted?: (ctx: ScreeningCompletedContext) => Promise<void>,
 	) {}
 
 	async execute({
@@ -75,7 +75,7 @@ export class ProcessInterviewInterviewerAgentUseCase {
 		const agentResult = await this.interviewerAgent.interview({
 			message: messageText,
 			isThirdParty: aiSession.isThirdParty,
-			clientName: aiSession.name,
+			contactName: aiSession.name,
 			caseCategory: screeningFlow.caseType,
 			questions,
 			collectedData,
@@ -106,17 +106,19 @@ export class ProcessInterviewInterviewerAgentUseCase {
 			});
 		}
 
-		if (aiSession.leadId) {
-			await this.caseAnalyzerUseCase.execute({
+		// Triagem concluída: invocar o hook da instância (se fornecido)
+		if (aiSession.leadId && this.onScreeningCompleted) {
+			const ctx: ScreeningCompletedContext = {
 				aiSession,
 				leadId: aiSession.leadId,
-				clientName: agentOutput.clientName,
+				contactName: agentOutput.contactName,
 				collectedData: agentOutput.collectedData,
 				today,
-			});
+			};
+			await this.onScreeningCompleted(ctx);
 		}
 
-		aiSession.status = AiSessionStatus.FORWARDED;
+		aiSession.status = "FORWARDED";
 		await this.aiSessionRepository.save(aiSession);
 
 		return right({

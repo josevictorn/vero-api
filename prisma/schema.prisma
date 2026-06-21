@@ -30,15 +30,7 @@ enum LeadStatus {
   @@schema("vero")
 }
 
-enum AiSessionStatus {
-  IDENTIFYING
-  INTERVIEWING
-  FORWARDED
-  BOOKING
-  BOOKED
-
-  @@schema("vero")
-}
+// Status are now defined as string constants by each instance (see src/instance/config/)
 
 model User {
   id            String   @id @default(uuid())
@@ -110,8 +102,9 @@ model Lead {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   lawyer    Lawyer?   @relation(fields: [lawyerId], references: [id])
 
-  caseAnalyses CaseAnalysis[]
-  client       Client? @relation("LeadToClient")
+  caseAnalyses     CaseAnalysis[]
+  screeningReports ScreeningReport[]
+  client           Client? @relation("LeadToClient")
 
   @@map("leads")
   @@schema("vero")
@@ -207,20 +200,23 @@ model AiSession {
   screeningFlowId String?  @map("screening_flow_id")
   leadId          String?  @map("lead_id")
   chatId          String   @map("chat_id")
-  status          AiSessionStatus @default(IDENTIFYING)
+  /// Status is a free string defined by each app instance (e.g. "IDENTIFYING", "BOOKED").
+  status          String   @default("IDENTIFYING")
   chatState       Json     @map("chat_state")
   name            String
   cellphone       String
   isThirdParty    Boolean  @default(false) @map("is_third_party")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  screeningFlow ScreeningFlow? @relation(fields: [screeningFlowId], references: [id], onDelete: Cascade)
-  caseAnalyses  CaseAnalysis[]
+  screeningFlow    ScreeningFlow?    @relation(fields: [screeningFlowId], references: [id], onDelete: Cascade)
+  caseAnalyses     CaseAnalysis[]
+  screeningReports ScreeningReport[]
 
   @@map("ai_sessions")
   @@schema("vero")
 }
 
+/// @deprecated Use ScreeningReport instead. Kept for backwards compatibility.
 model CaseAnalysis {
   id                  String   @id @default(uuid())
   aiSessionId         String   @map("ai_session_id")
@@ -236,6 +232,25 @@ model CaseAnalysis {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@map("case_analyses")
+  @@schema("vero")
+}
+
+/// Generic post-screening report. The `data` field holds instance-specific structured output
+/// (e.g. legal analysis, medical intake form, construction estimate).
+model ScreeningReport {
+  id          String   @id @default(uuid())
+  aiSessionId String   @map("ai_session_id")
+  leadId      String   @map("lead_id")
+  title       String
+  summary     String
+  data        Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  aiSession AiSession @relation(fields: [aiSessionId], references: [id], onDelete: Cascade)
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@map("screening_reports")
   @@schema("vero")
 }
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { AiSessionStatus } from "@generated/prisma/client";
+
 import { InMemoryAiSessionRepository } from "@/core/repositories/in-memory/in-memory-ai-session-repository";
 import { AiSessionNotFoundError } from "./errors/ai-session-not-found-error";
 import { GetAiSessionByChatIdUseCase } from "./get-ai-session-by-chat-id";
@@ -16,7 +16,7 @@ describe("Get AI Session By Chat ID Use Case", () => {
 	it("should be able to get ai session by chat id", async () => {
 		const aiSession = await aiSessionRepository.create({
 			chatId: "chat-123",
-			status: AiSessionStatus.IDENTIFYING,
+			status: "IDENTIFYING",
 			chatState: { step: 1 },
 			name: "John Doe",
 			cellphone: "11999990001",

@@ -6,16 +6,16 @@ import type {
 	InterviewerAgent,
 	InterviewerAgentInput,
 	InterviewerAgentOutput,
-} from "./interviewer-agent";
+} from "@core/agents/ports/interviewer-agent.port";
 import { buildInterviewerSystemPrompt } from "./interviewer-prompt";
-import { ChatMessage } from "@/providers/agents/types/chat-message";
-import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
+import type { ChatMessage } from "@core/agents/types/chat-message";
+import { AgentResponseError } from "@core/agents/errors/agent-response-error";
 
 const AGENT_NAME = "interviewer";
 const MODEL = "gemini-3-flash-preview";
 
 const interviewerResponseSchema = z.object({
-	clientName: z.string(),
+	contactName: z.string(),
 	nextQuestionToClient: z.string(),
 	collectedData: z.array(
 		z.object({
@@ -29,7 +29,7 @@ const interviewerResponseSchema = z.object({
 const interviewerJsonSchema = {
 	type: Type.OBJECT,
 	properties: {
-		clientName: {
+		contactName: {
 			type: Type.STRING,
 			description:
 				"Nome de quem precisa do benefício (e quem está falando, se for o caso).",
@@ -65,7 +65,7 @@ const interviewerJsonSchema = {
 		},
 	},
 	required: [
-		"clientName",
+		"contactName",
 		"nextQuestionToClient",
 		"collectedData",
 		"screeningCompleted",
@@ -89,7 +89,7 @@ export class GeminiInterviewerAgent implements InterviewerAgent {
 	): Promise<Either<AgentResponseError, InterviewerAgentOutput>> {
 		const systemInstruction = buildInterviewerSystemPrompt({
 			isThirdParty: input.isThirdParty,
-			clientName: input.clientName,
+			contactName: input.contactName,
 			caseCategory: input.caseCategory,
 			questions: input.questions,
 			collectedData: input.collectedData,

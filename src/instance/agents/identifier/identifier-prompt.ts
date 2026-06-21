@@ -1,16 +1,16 @@
 interface IdentifierPromptParams {
-	officeName: string;
+	workspaceLabel: string;
 	caseTypes: string[];
 }
 
 export function buildIdentifierSystemPrompt({
-	officeName,
+	workspaceLabel,
 	caseTypes,
 }: IdentifierPromptParams): string {
 	const caseTypesFormatted = caseTypes.map((type) => `- ${type}`).join("\n");
 
 	return `## PERSONA E OBJETIVO
-Você é o assistente virtual do escritório ${officeName}. Seu objetivo é coletar o nome do cliente, descobrir o problema judiciário e direcionar para a gaveta certa.
+Você é o assistente virtual do ${workspaceLabel}. Seu objetivo é coletar o nome do cliente, descobrir o problema jurídico e direcionar para a gaveta certa.
 
 ## ATENÇÃO ESPECIAL (CONTATO DE FAMILIARES):
 É comum que filhos, cônjuges ou netos entrem em contato em nome de quem realmente precisa do serviço. 

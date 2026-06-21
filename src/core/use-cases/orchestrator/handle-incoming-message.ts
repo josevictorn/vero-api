@@ -1,6 +1,5 @@
 import { Either, left, right } from "@/utils/either"
 import { WorkspaceNotFoundError } from "../workspaces/errors/workspace-not-found-error"
-import { AiSessionStatus } from "@generated/prisma/enums";
 import { AiSession } from "@generated/prisma/client"
 import { CreateAiSessionUseCase } from "../ai-session/create-ai-session"
 import { EditAiSessionUseCase } from "../ai-session/edit-ai-session"
@@ -31,7 +30,9 @@ export class HandleIncomingMessageUseCase {
         private readonly createAiSession: CreateAiSessionUseCase,
         private readonly createLead: CreateLeadUseCase,
         private readonly fetchWorkspaces: FetchWorkspacesUseCase,
-        private readonly editAiSession: EditAiSessionUseCase
+        private readonly editAiSession: EditAiSessionUseCase,
+        /** Status que indicam sessão encerrada — vêm do InstanceConfig.terminalStatuses */
+        private readonly terminalStatuses: string[],
     ) {}
 
     async execute({
@@ -41,9 +42,12 @@ export class HandleIncomingMessageUseCase {
     }: HandleIncomingMessageRequest): Promise<HandleIncomingMessageResponse> {
 
         const getSessionResult = await this.getAiSession.execute({ aiSessionChatId: chatId });
-        let activeSession;
 
-        if (getSessionResult.isLeft() || getSessionResult.value.aiSession.status === AiSessionStatus.BOOKED) {
+        const isTerminalSession =
+            getSessionResult.isRight() &&
+            this.terminalStatuses.includes(getSessionResult.value.aiSession.status);
+
+        if (getSessionResult.isLeft() || isTerminalSession) {
 
             const createResult = await this.createAiSession.execute({
                 cellphone: phoneNumber,
@@ -53,19 +57,15 @@ export class HandleIncomingMessageUseCase {
             });
 
             if (createResult.isLeft()) {
-                const error = createResult.value;
-            
-                return left(error)
+                return left(createResult.value)
             }
 
-            activeSession = createResult.value.aiSession;
+            const activeSession = createResult.value.aiSession;
 
-            
-            const workspace = await this.fetchWorkspaces.execute({page : 1});
+            const workspace = await this.fetchWorkspaces.execute({ page: 1 });
 
-            if(workspace.isLeft()) {
-                const error = workspace.value
-                return left(error)
+            if (workspace.isLeft()) {
+                return left(workspace.value)
             }
 
             const createLeadResult = await this.createLead.execute({
@@ -74,10 +74,8 @@ export class HandleIncomingMessageUseCase {
                 cellphone: phoneNumber,
             })
 
-            if(createLeadResult.isLeft()) {
-                const error = createLeadResult.value;
-
-                return left(error)
+            if (createLeadResult.isLeft()) {
+                return left(createLeadResult.value)
             }
 
             activeSession.leadId = createLeadResult.value.lead.id;
@@ -90,9 +88,7 @@ export class HandleIncomingMessageUseCase {
 
             return right({ aiSession: activeSession })
         }
-        else {
-            activeSession = getSessionResult.value.aiSession;
-            return right({ aiSession: activeSession })
-        }
+
+        return right({ aiSession: getSessionResult.value.aiSession })
     }
 }

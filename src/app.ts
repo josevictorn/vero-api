@@ -24,7 +24,7 @@ import { passwordRoutes } from "@/core/controllers/password/routes";
 // --- Instance (Vero) routes ---
 import { lawyersRoutes } from "@/http/controllers/lawyers/routes";
 import { clientsRoutes } from "@/http/controllers/clients/routes";
-import { caseAnalysisRoutes } from "@/http/controllers/case-analysis/routes";
+import { screeningReportsRoutes } from "@/core/controllers/screening-reports/routes";
 import { calendarRoutes } from "@/http/controllers/calendar/routes";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
@@ -80,7 +80,7 @@ app.register(leadsRoutes);
 app.register(screeningFlowsRoutes);
 app.register(calendarRoutes);
 app.register(aiSessionsRoutes);
-app.register(caseAnalysisRoutes);
+app.register(screeningReportsRoutes);
 app.register(lawyersRoutes);
 app.register(webhooksRoutes);
 app.register(clientsRoutes);

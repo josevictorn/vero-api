@@ -1,15 +1,14 @@
 import type { AiSession, ScreeningFlow } from "@generated/prisma/client";
-import { AiSessionStatus } from "@generated/prisma/client";
 import { type Either, left, right } from "@/utils/either";
 import { WorkspaceNotConfiguredError } from "./errors/workspace-not-configured-error";
 import { ScreeningFlowNotMatchedError } from "./errors/screening-flow-not-matched-error";
 import { ScreeningFlowsRepository } from "@/core/repositories/screening-flows-repository";
 import { AiSessionRepository } from "@/core/repositories/ai-session-repository";
 import { WorkspacesRepository } from "@/core/repositories/workspaces-repository";
-import { ChatMemoryProvider } from "@/providers/agents/memory/chat-memory-provider";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
-import { ChatMessage } from "@/core/agents/types/chat-message";
-import { IdentifierAgent } from "@/providers/agents/identifier/identifier-agent";
+import type { ChatMessage } from "@/core/agents/types/chat-message";
+import type { IdentifierAgent } from "@/core/agents/ports/identifier-agent.port";
+import type { ChatMemoryPort } from "@/core/agents/ports/chat-memory.port";
 
 interface ProcessMessageIdentifyingAgentRequest {
 	aiSession: AiSession;
@@ -33,7 +32,8 @@ export class ProcessMessageIdentifyingAgentUseCase {
 		private readonly aiSessionRepository: AiSessionRepository,
 		private readonly workspacesRepository: WorkspacesRepository,
 		private readonly identifierAgent: IdentifierAgent,
-		private readonly chatMemoryProvider: ChatMemoryProvider,
+		private readonly chatMemoryProvider: ChatMemoryPort,
+		private readonly workspaceLabel: string,
 	) {}
 
 	async execute({
@@ -54,7 +54,7 @@ export class ProcessMessageIdentifyingAgentUseCase {
 
 		const agentResult = await this.identifierAgent.identify({
 			message: messageText,
-			officeName: workspace.name,
+			workspaceLabel: this.workspaceLabel,
 			caseTypes,
 			chatHistory,
 		});
@@ -74,7 +74,7 @@ export class ProcessMessageIdentifyingAgentUseCase {
 
 		const categoryIdentified =
 			agentOutput.identifiedCategory !== NOT_IDENTIFIED;
-		const nameIdentified = agentOutput.fullName !== NOT_IDENTIFIED;
+		const nameIdentified = agentOutput.contactName !== NOT_IDENTIFIED;
 		const identified = categoryIdentified && nameIdentified;
 
 		if (!identified) {
@@ -94,9 +94,9 @@ export class ProcessMessageIdentifyingAgentUseCase {
 			);
 		}
 
-		aiSession.status = AiSessionStatus.INTERVIEWING;
+		aiSession.status = "INTERVIEWING";
 		aiSession.screeningFlowId = matchedFlow.id;
-		aiSession.name = agentOutput.fullName;
+		aiSession.name = agentOutput.contactName;
 		aiSession.isThirdParty = agentOutput.isThirdParty;
 
 		await this.aiSessionRepository.save(aiSession);

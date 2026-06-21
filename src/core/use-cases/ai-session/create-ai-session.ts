@@ -1,4 +1,4 @@
-import type { AiSession, AiSessionStatus, Prisma } from "@generated/prisma/client";
+import type { AiSession, Prisma } from "@generated/prisma/client";
 import { type Either, left, right } from "@/utils/either";
 import { ScreeningFlowNotFoundError } from "./errors/screening-flow-not-found-error";
 import { AiSessionRepository } from "@/core/repositories/ai-session-repository";
@@ -12,7 +12,7 @@ interface CreateAiSessionUseCaseRequest {
 	isThirdParty?: boolean;
 	name: string;
 	screeningFlowId?: string;
-	status?: AiSessionStatus;
+	status?: string;
 }
 
 type CreateAiSessionUseCaseResponse = Either<

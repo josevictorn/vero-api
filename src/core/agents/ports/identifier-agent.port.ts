@@ -4,8 +4,8 @@ import type { AgentResponseError } from "@core/agents/errors/agent-response-erro
 
 export interface IdentifierAgentInput {
 	message: string;
-	/** Nome do negócio/workspace (ex: nome do escritório, clínica, etc.) */
-	workspaceName: string;
+	/** Label do tipo de negócio/workspace (ex: "escritório de advocacia", "clínica médica") */
+	workspaceLabel: string;
 	caseTypes: string[];
 	chatHistory?: ChatMessage[];
 }
