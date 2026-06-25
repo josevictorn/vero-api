@@ -436,44 +436,63 @@ export interface InstanceConfig {
 
 ## 🔄 Fluxo de uma Mensagem WhatsApp
 
-```
-[WhatsApp / Evolution API]
-       │ POST /webhooks/evolution
-       ▼
-[EvolutionWebhookController]  (core)
-       │ injeta lawFirmInstanceConfig
-       │
-       ├─► HandleIncomingMessageUseCase  (core)
-       │         │ Busca/cria sessão (AiSession)
-       │         │ Usa instanceConfig.terminalStatuses
-       │         │   → se terminal: reinicia sessão, cria novo Lead
-       │         └─► retorna AiSession ativa
-       │
-       └─► RouteMessageUseCase  (core)
-                 │ Consulta instanceConfig.statusHandlers[session.status]
-                 │
-                 ├─► [IDENTIFYING] → ProcessMessageIdentifyingAgentUseCase
-                 │         │ GeminiIdentifierAgent (instância)
-                 │         │   → identifica nome + categoria
-                 │         │ Se identificado: status → INTERVIEWING
-                 │         └─► onStatusTransition["INTERVIEWING"]? (instância)
-                 │
-                 ├─► [INTERVIEWING] → ProcessInterviewInterviewerAgentUseCase
-                 │         │ GeminiInterviewerAgent (instância)
-                 │         │   → faz perguntas do ScreeningFlow
-                 │         │ Se triagem completa: status → FORWARDED
-                 │         └─► onStatusTransition["FORWARDED"] (instância)
-                 │                   └─► ProcessScreeningAnalyzerAgentUseCase
-                 │                             └─► GeminiCaseAnalyzerAgent
-                 │                                   → análise jurídica
-                 │                                   → persiste ScreeningReport
-                 │
-                 ├─► [FORWARDED] → silencioso (reply: "")
-                 ├─► [BOOKING]   → silencioso (reply: "")
-                 └─► [BOOKED]    → silencioso (nova msg reinicia sessão)
-                           │
-                           ▼
-              [sendTextMessage → Evolution API → WhatsApp]
+```mermaid
+flowchart TD
+    WA([WhatsApp / Evolution API]) -->|POST /webhooks/evolution| EWC
+
+    subgraph CORE ["⚙️ Core — fixo"]
+        EWC["EvolutionWebhookController\n(injeta lawFirmInstanceConfig)"]
+        HIM["HandleIncomingMessageUseCase\n· Busca ou cria AiSession\n· Cria Lead se sessão nova\n· Usa terminalStatuses da instância"]
+        RMU["RouteMessageUseCase\n· Consulta statusHandlers[session.status]\n· Completamente genérico"]
+        PIAgent["ProcessMessageIdentifyingAgentUseCase\n· Orquestra identificação\n· Dispara onStatusTransition[INTERVIEWING]"]
+        PVAgent["ProcessInterviewInterviewerAgentUseCase\n· Orquestra entrevista\n· Dispara onStatusTransition[FORWARDED]"]
+    end
+
+    subgraph INSTANCE ["🟢 Instância — variável (advocacia)"]
+        GIA["GeminiIdentifierAgent\n(identifica nome + categoria)"]
+        GVA["GeminiInterviewerAgent\n(faz perguntas do ScreeningFlow)"]
+        PSA["ProcessScreeningAnalyzerAgentUseCase\nhook: onStatusTransition[FORWARDED]"]
+        GCA["GeminiCaseAnalyzerAgent\n(análise jurídica do caso)"]
+        SR[("ScreeningReport\npersistido no banco")]
+        SIL_F["statusHandler[FORWARDED]\nsilencioso — reply: nulo"]
+        SIL_BK["statusHandler[BOOKING]\nsilencioso — reply: nulo"]
+        SIL_BD["statusHandler[BOOKED]\nsilencioso — nova msg reinicia sessão"]
+    end
+
+    EWC --> HIM
+    EWC --> RMU
+    HIM -->|"AiSession ativa"| RMU
+
+    RMU -->|"status = IDENTIFYING"| PIAgent
+    RMU -->|"status = INTERVIEWING"| PVAgent
+    RMU -->|"status = FORWARDED"| SIL_F
+    RMU -->|"status = BOOKING"| SIL_BK
+    RMU -->|"status = BOOKED"| SIL_BD
+
+    PIAgent -->|"usa"| GIA
+    GIA -->|"identificado → status INTERVIEWING"| PIAgent
+
+    PVAgent -->|"usa"| GVA
+    GVA -->|"triagem completa → status FORWARDED"| PVAgent
+    PVAgent -->|"onStatusTransition[FORWARDED]"| PSA
+    PSA -->|"usa"| GCA
+    GCA -->|"resultado"| SR
+
+    RMU -->|"reply preenchido"| SEND
+    SIL_F -->|"reply vazio"| SKIP([ignorado])
+    SIL_BK -->|"reply vazio"| SKIP
+    SIL_BD -->|"reply vazio"| SKIP
+
+    SEND["sendTextMessage"]
+    SEND --> WA2([WhatsApp ← resposta ao lead])
+
+    style CORE fill:#1e2a3a,stroke:#4a9eff,color:#fff
+    style INSTANCE fill:#1a3a2a,stroke:#4aff88,color:#fff
+    style IA stroke:#4aff88,stroke-width:2px
+    style GIA stroke:#4aff88,stroke-width:2px
+    style GVA stroke:#4aff88,stroke-width:2px
+    style GCA stroke:#4aff88,stroke-width:2px
+    style PSA stroke:#4aff88,stroke-width:2px
 ```
 
 ---
