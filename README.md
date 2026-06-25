@@ -109,128 +109,112 @@ O projeto aplica o padrão **Ports & Adapters (Hexagonal Architecture)**: o core
 classDiagram
     direction TB
 
-    %% ─────────────────────────────────────────────────────
-    %% PONTO FLEXÍVEL CENTRAL: InstanceConfig
-    %% ─────────────────────────────────────────────────────
+    %% ─────────────────────────────────────────
+    %% PONTO FLEXÍVEL CENTRAL
+    %% ─────────────────────────────────────────
     class InstanceConfig {
         <<interface>>
-        +string workspaceLabel
-        +AgentSet agents
-        +string[] terminalStatuses
-        +StatusHandlerMap statusHandlers
-        +StatusTransitionMap? onStatusTransition
+        +workspaceLabel String
+        +agents AgentSet
+        +terminalStatuses String[]
+        +statusHandlers StatusHandlerMap
+        +onStatusTransition StatusTransitionMap
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% PORTS (Pontos Flexíveis — Agentes)
-    %% ─────────────────────────────────────────────────────
+    %% ─────────────────────────────────────────
+    %% PORTS — Pontos Flexíveis de Agente
+    %% ─────────────────────────────────────────
     class IdentifierAgent {
         <<interface>>
-        +identify(input: IdentifierAgentInput) Either~AgentResponseError, IdentifierAgentOutput~
+        +identify(input) Either
     }
 
     class InterviewerAgent {
         <<interface>>
-        +interview(input: InterviewerAgentInput) Either~AgentResponseError, InterviewerAgentOutput~
+        +interview(input) Either
     }
 
     class ChatMemoryPort {
         <<interface>>
-        +getHistory(key: string) ChatMessage[]
-        +saveHistory(key: string, messages: ChatMessage[]) void
-        +clear(key: string) void
+        +getHistory(key) ChatMessage[]
+        +saveHistory(key, messages) void
+        +clear(key) void
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% TYPES (Pontos Flexíveis — Handlers)
-    %% ─────────────────────────────────────────────────────
+    %% ─────────────────────────────────────────
+    %% TYPES — Pontos Flexíveis de Handler
+    %% ─────────────────────────────────────────
     class StatusHandlerMap {
         <<type>>
-        Record~string, StatusHandler~
+        +handlers Record
     }
 
     class StatusTransitionMap {
         <<type>>
-        Record~string, StatusTransitionHandler~
+        +hooks Record
     }
 
     class StatusHandler {
         <<type>>
-        (session, message, ctx) => Either~Error, reply~
+        +call(session, message, ctx) Either
     }
 
     class StatusTransitionHandler {
         <<type>>
-        (ctx: StatusTransitionContext) => void
+        +call(ctx) void
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% CORE — Use Cases do Orchestrator (Fixos)
-    %% ─────────────────────────────────────────────────────
+    %% ─────────────────────────────────────────
+    %% CORE — Fixo
+    %% ─────────────────────────────────────────
     class HandleIncomingMessageUseCase {
-        -GetAiSessionByChatIdUseCase getAiSession
-        -CreateAiSessionUseCase createAiSession
-        -CreateLeadUseCase createLead
-        -FetchWorkspacesUseCase fetchWorkspaces
-        -EditAiSessionUseCase editAiSession
-        -string[] terminalStatuses
-        +execute(request) Either~Error, AiSession~
+        -terminalStatuses String[]
+        +execute(request) Either
     }
 
     class RouteMessageUseCase {
-        -StatusHandlerMap statusHandlers
-        +execute(request) Either~Error, messageToClient~
+        -statusHandlers StatusHandlerMap
+        +execute(request) Either
     }
 
     class ProcessMessageIdentifyingAgentUseCase {
-        -ScreeningFlowsRepository screeningFlowsRepo
-        -AiSessionRepository aiSessionRepo
-        -WorkspacesRepository workspacesRepo
-        -IdentifierAgent identifierAgent
-        -ChatMemoryPort chatMemory
-        -string workspaceLabel
-        -StatusTransitionMap? onStatusTransition
-        +execute(request) Either~Error, identified~
+        -identifierAgent IdentifierAgent
+        -chatMemory ChatMemoryPort
+        -workspaceLabel String
+        -onStatusTransition StatusTransitionMap
+        +execute(request) Either
     }
 
     class ProcessInterviewInterviewerAgentUseCase {
-        -ScreeningFlowsRepository screeningFlowsRepo
-        -AiSessionRepository aiSessionRepo
-        -InterviewerAgent interviewerAgent
-        -ChatMemoryPort chatMemory
-        -StatusTransitionMap? onStatusTransition
-        +execute(request) Either~Error, screeningCompleted~
+        -interviewerAgent InterviewerAgent
+        -chatMemory ChatMemoryPort
+        -onStatusTransition StatusTransitionMap
+        +execute(request) Either
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% CORE — Webhook Controller (Fixo)
-    %% ─────────────────────────────────────────────────────
     class EvolutionWebhookController {
-        +POST /webhooks/evolution
-        -injects: InstanceConfig
+        +post(path, handler) void
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% INSTÂNCIA — Implementações Concretas (Advocacia)
-    %% ─────────────────────────────────────────────────────
+    %% ─────────────────────────────────────────
+    %% INSTÂNCIA — Variável (Advocacia)
+    %% ─────────────────────────────────────────
     class lawFirmInstanceConfig {
-        +workspaceLabel = "escritório de advocacia"
-        +agents: identifier + interviewer
-        +terminalStatuses = ["BOOKED"]
-        +statusHandlers: LAW_FIRM_STATUS map
-        +onStatusTransition: FORWARDED hook
+        +workspaceLabel String
+        +agents AgentSet
+        +terminalStatuses String[]
+        +statusHandlers StatusHandlerMap
+        +onStatusTransition StatusTransitionMap
     }
 
     class GeminiIdentifierAgent {
-        -MODEL = "gemini-3-flash-preview"
-        +identify(input) Either~AgentResponseError, IdentifierAgentOutput~
-        -buildIdentifierSystemPrompt()
+        -model String
+        +identify(input) Either
     }
 
     class GeminiInterviewerAgent {
-        -MODEL = "gemini-3-flash-preview"
-        +interview(input) Either~AgentResponseError, InterviewerAgentOutput~
-        -buildInterviewerSystemPrompt()
+        -model String
+        +interview(input) Either
     }
 
     class RedisChatMemoryProvider {
@@ -240,53 +224,47 @@ classDiagram
     }
 
     class ProcessScreeningAnalyzerAgentUseCase {
-        -GeminiCaseAnalyzerAgent caseAnalyzerAgent
-        -ScreeningReportRepository screeningReportRepo
-        +execute(ctx: StatusTransitionContext) void
+        -caseAnalyzerAgent GeminiCaseAnalyzerAgent
+        +execute(ctx) void
     }
 
     class GeminiCaseAnalyzerAgent {
-        -MODEL = "gemini-3-flash-preview"
-        +analyze(input) Either~AgentResponseError, CaseAnalyzerAgentOutput~
-        -buildCaseAnalyzerSystemPrompt()
+        -model String
+        +analyze(input) Either
     }
 
-    %% ─────────────────────────────────────────────────────
-    %% RELAÇÕES — Core usa Ports
-    %% ─────────────────────────────────────────────────────
-    InstanceConfig --> IdentifierAgent : "agents.identifier"
-    InstanceConfig --> InterviewerAgent : "agents.interviewer"
-    InstanceConfig --> StatusHandlerMap : "statusHandlers"
-    InstanceConfig --> StatusTransitionMap : "onStatusTransition"
+    %% RELACOES Core usa Ports
+    InstanceConfig --> IdentifierAgent : agents.identifier
+    InstanceConfig --> InterviewerAgent : agents.interviewer
+    InstanceConfig --> StatusHandlerMap : statusHandlers
+    InstanceConfig --> StatusTransitionMap : onStatusTransition
 
-    StatusHandlerMap --> StatusHandler : "values"
-    StatusTransitionMap --> StatusTransitionHandler : "values"
+    StatusHandlerMap --> StatusHandler : values
+    StatusTransitionMap --> StatusTransitionHandler : values
 
-    HandleIncomingMessageUseCase ..> InstanceConfig : "recebe terminalStatuses"
-    RouteMessageUseCase ..> StatusHandlerMap : "delega por status"
-    ProcessMessageIdentifyingAgentUseCase ..> IdentifierAgent : "usa"
-    ProcessMessageIdentifyingAgentUseCase ..> ChatMemoryPort : "usa"
-    ProcessMessageIdentifyingAgentUseCase ..> StatusTransitionMap : "dispara hook"
-    ProcessInterviewInterviewerAgentUseCase ..> InterviewerAgent : "usa"
-    ProcessInterviewInterviewerAgentUseCase ..> ChatMemoryPort : "usa"
-    ProcessInterviewInterviewerAgentUseCase ..> StatusTransitionMap : "dispara hook"
+    HandleIncomingMessageUseCase ..> InstanceConfig : terminalStatuses
+    RouteMessageUseCase ..> StatusHandlerMap : delega por status
+    ProcessMessageIdentifyingAgentUseCase ..> IdentifierAgent : usa
+    ProcessMessageIdentifyingAgentUseCase ..> ChatMemoryPort : usa
+    ProcessMessageIdentifyingAgentUseCase ..> StatusTransitionMap : dispara hook
+    ProcessInterviewInterviewerAgentUseCase ..> InterviewerAgent : usa
+    ProcessInterviewInterviewerAgentUseCase ..> ChatMemoryPort : usa
+    ProcessInterviewInterviewerAgentUseCase ..> StatusTransitionMap : dispara hook
 
-    EvolutionWebhookController ..> InstanceConfig : "injeta config"
-    EvolutionWebhookController ..> HandleIncomingMessageUseCase : "orquestra"
-    EvolutionWebhookController ..> RouteMessageUseCase : "orquestra"
+    EvolutionWebhookController ..> InstanceConfig : injeta config
+    EvolutionWebhookController ..> HandleIncomingMessageUseCase : orquestra
+    EvolutionWebhookController ..> RouteMessageUseCase : orquestra
 
-    %% ─────────────────────────────────────────────────────
-    %% RELAÇÕES — Instância implementa Ports
-    %% ─────────────────────────────────────────────────────
-    lawFirmInstanceConfig ..|> InstanceConfig : "implements"
-    GeminiIdentifierAgent ..|> IdentifierAgent : "implements"
-    GeminiInterviewerAgent ..|> InterviewerAgent : "implements"
-    RedisChatMemoryProvider ..|> ChatMemoryPort : "implements"
+    %% RELACOES Instancia implementa Ports
+    lawFirmInstanceConfig ..|> InstanceConfig : implements
+    GeminiIdentifierAgent ..|> IdentifierAgent : implements
+    GeminiInterviewerAgent ..|> InterviewerAgent : implements
+    RedisChatMemoryProvider ..|> ChatMemoryPort : implements
 
-    lawFirmInstanceConfig --> GeminiIdentifierAgent : "cria"
-    lawFirmInstanceConfig --> GeminiInterviewerAgent : "cria"
-    lawFirmInstanceConfig --> ProcessScreeningAnalyzerAgentUseCase : "registra em onStatusTransition[FORWARDED]"
-    ProcessScreeningAnalyzerAgentUseCase --> GeminiCaseAnalyzerAgent : "usa"
+    lawFirmInstanceConfig --> GeminiIdentifierAgent : cria
+    lawFirmInstanceConfig --> GeminiInterviewerAgent : cria
+    lawFirmInstanceConfig --> ProcessScreeningAnalyzerAgentUseCase : hook FORWARDED
+    ProcessScreeningAnalyzerAgentUseCase --> GeminiCaseAnalyzerAgent : usa
 ```
 
 ### Leitura do Diagrama
