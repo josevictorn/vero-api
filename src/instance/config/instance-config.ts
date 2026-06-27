@@ -2,6 +2,8 @@ import { right, left } from "@/utils/either";
 import type { InstanceConfig } from "@core/config/instance-config.port";
 import { GeminiIdentifierAgent } from "@instance/agents/identifier/gemini-identifier-agent";
 import { GeminiInterviewerAgent } from "@instance/agents/interviewer/gemini-interviewer-agent";
+import { GeminiCaseAnalyzerAgent } from "@instance/agents/case-analyzer/gemini-case-analyzer-agent";
+import { PrismaScreeningReportRepository } from "@/core/repositories/prisma/prisma-screening-report-repository";
 import { ProcessScreeningAnalyzerAgentUseCase } from "@instance/use-cases/agents/process-screening-analyzer-agent";
 import { makeProcessMessageIdentifyingAgentUseCase } from "@/core/use-cases/orchestrator/agents/factories/make-process-message-identifying-agent";
 import { makeProcessInterviewInterviewerAgentUseCase } from "@/core/use-cases/orchestrator/agents/factories/make-process-interview-interviewer-agent";
@@ -24,7 +26,10 @@ export const LAW_FIRM_STATUS = {
  * - Hook pós-triagem para análise jurídica do caso
  */
 export function createLawFirmInstanceConfig(): InstanceConfig {
-	const analyzerUseCase = new ProcessScreeningAnalyzerAgentUseCase();
+	const analyzerUseCase = new ProcessScreeningAnalyzerAgentUseCase(
+		new GeminiCaseAnalyzerAgent(),
+		new PrismaScreeningReportRepository(),
+	);
 
 	// A config base é montada primeiro (sem statusHandlers que dependem dela própria)
 	const baseConfig = {

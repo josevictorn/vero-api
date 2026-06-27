@@ -1,8 +1,8 @@
 import { type Either, left, right } from "@/utils/either";
 import type { AiSession } from "@generated/prisma/client";
-import { GeminiCaseAnalyzerAgent } from "@/instance/agents/case-analyzer/gemini-case-analyzer-agent";
+import type { CaseAnalyzerAgent } from "@/instance/agents/case-analyzer/case-analyzer-agent";
 import type { CollectedDataItem } from "@/core/agents/types/collected-data-item";
-import { PrismaScreeningReportRepository } from "@/core/repositories/prisma/prisma-screening-report-repository";
+import type { ScreeningReportRepository } from "@/core/repositories/screening-report-repository";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
 import type { StatusTransitionContext } from "@/core/orchestrator/session-status-handler";
 
@@ -14,8 +14,10 @@ import type { StatusTransitionContext } from "@/core/orchestrator/session-status
  * Nessa transição específica, `contactName`, `collectedData` e `today` estão sempre presentes.
  */
 export class ProcessScreeningAnalyzerAgentUseCase {
-	private readonly caseAnalyzerAgent = new GeminiCaseAnalyzerAgent();
-	private readonly screeningReportRepository = new PrismaScreeningReportRepository();
+	constructor(
+		private readonly caseAnalyzerAgent: CaseAnalyzerAgent,
+		private readonly screeningReportRepository: ScreeningReportRepository,
+	) {}
 
 	async execute(ctx: StatusTransitionContext): Promise<void> {
 		const { aiSession, contactName, collectedData, today } = ctx;
