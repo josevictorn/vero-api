@@ -24,7 +24,7 @@ const envSchema = z.object({
     APP_URL: z.string(),
     EMAIL_FROM: z.string(),
     SMTP_HOST: z.string(),
-    SMTP_PORT: z.string(),
+    SMTP_PORT: z.coerce.number(),
     SMTP_USER: z.string(),
     SMTP_PASSWORD: z.string(),
     RESEND_API_KEY: z.string(),
