@@ -7,6 +7,7 @@ import { PrismaScreeningReportRepository } from "@/core/repositories/prisma/pris
 import { ProcessScreeningAnalyzerAgentUseCase } from "@instance/use-cases/agents/process-screening-analyzer-agent";
 import { makeProcessMessageIdentifyingAgentUseCase } from "@/core/use-cases/orchestrator/agents/factories/make-process-message-identifying-agent";
 import { makeProcessInterviewInterviewerAgentUseCase } from "@/core/use-cases/orchestrator/agents/factories/make-process-interview-interviewer-agent";
+import { LawFirmDomainEntityPort } from "@instance/ports/law-firm-domain-entity.port";
 
 // Status desta instância — definidos aqui para reutilização segura com tipagem
 export const LAW_FIRM_STATUS = {
@@ -39,7 +40,7 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 			interviewer: new GeminiInterviewerAgent(),
 		},
 		terminalStatuses: [LAW_FIRM_STATUS.BOOKED],
-	} satisfies Omit<InstanceConfig, "statusHandlers" | "onStatusTransition">;
+	} satisfies Omit<InstanceConfig, "statusHandlers" | "onStatusTransition" | "domainEntity">;
 
 	// Monta os use cases do core passando a config (sem os handlers ainda)
 	const identifyingUseCase = makeProcessMessageIdentifyingAgentUseCase(
@@ -98,6 +99,12 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 			/** Quando a triagem é concluída e o caso é encaminhado, gera a análise jurídica. */
 			[LAW_FIRM_STATUS.FORWARDED]: async (ctx) => analyzerUseCase.execute(ctx),
 		},
+		/**
+		 * Entidade de domínio desta instância: Client (cliente do escritório).
+		 * Criado automaticamente pelo framework ao concluir a triagem.
+		 * CRUD completo disponível via rotas genéricas /entities do framework.
+		 */
+		domainEntity: new LawFirmDomainEntityPort(),
 	};
 
 	return config;

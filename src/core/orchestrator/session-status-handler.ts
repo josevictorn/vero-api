@@ -40,6 +40,11 @@ export interface StatusTransitionContext {
 	contactName?: string;
 	/** Data atual formatada (disponível na transição para FORWARDED). */
 	today?: string;
+	/**
+	 * ID da entidade de domínio criada pelo `DomainEntityPort` nesta transição.
+	 * Disponível em FORWARDED quando `InstanceConfig.domainEntity` está configurado.
+	 */
+	domainEntityId?: string;
 }
 
 /**

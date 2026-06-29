@@ -21,11 +21,12 @@ import { workspacesRoutes } from "@/core/controllers/workspaces/routes";
 import { leadsRoutes } from "@/core/controllers/leads/routes";
 import { webhooksRoutes } from "@/core/controllers/webhooks/routes";
 import { passwordRoutes } from "@/core/controllers/password/routes";
+import { domainEntitiesRoutes } from "@/core/controllers/domain-entities/routes";
 // --- Instance (Vero) routes ---
 import { lawyersRoutes } from "@/http/controllers/lawyers/routes";
-import { clientsRoutes } from "@/http/controllers/clients/routes";
 import { screeningReportsRoutes } from "@/core/controllers/screening-reports/routes";
 import { calendarRoutes } from "@/http/controllers/calendar/routes";
+import { lawFirmInstanceConfig } from "@instance/config/instance-config";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
@@ -83,8 +84,11 @@ app.register(aiSessionsRoutes);
 app.register(screeningReportsRoutes);
 app.register(lawyersRoutes);
 app.register(webhooksRoutes);
-app.register(clientsRoutes);
 app.register(passwordRoutes);
+// Rotas genéricas de entidade de domínio (CRUD via DomainEntityPort da instância)
+if (lawFirmInstanceConfig.domainEntity) {
+	app.register(domainEntitiesRoutes(lawFirmInstanceConfig.domainEntity));
+}
 
 app.setErrorHandler((error, _, reply) => {
 	if (hasZodFastifySchemaValidationErrors(error)) {

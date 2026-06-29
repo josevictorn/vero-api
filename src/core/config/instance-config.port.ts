@@ -2,6 +2,7 @@ import type { AiSession } from "@generated/prisma/client";
 import type { IdentifierAgent } from "@core/agents/ports/identifier-agent.port";
 import type { InterviewerAgent } from "@core/agents/ports/interviewer-agent.port";
 import type { StatusHandlerMap, StatusTransitionMap } from "@core/orchestrator/session-status-handler";
+import type { DomainEntityPort } from "@/core/ports/domain-entity.port";
 
 /**
  * Contrato que cada instância do framework deve implementar.
@@ -70,4 +71,19 @@ export interface InstanceConfig {
 	 * }
 	 */
 	onStatusTransition?: StatusTransitionMap;
+
+	/**
+	 * Port da entidade primária de domínio desta instância.
+	 *
+	 * O framework usa este port para:
+	 * 1. Criar a entidade automaticamente ao concluir a triagem (transição para FORWARDED)
+	 * 2. Fornecer CRUD genérico via rotas `/entities`
+	 *
+	 * A instância NÃO precisa escrever use cases ou controllers de entidade —
+	 * apenas implementar este port.
+	 *
+	 * @example
+	 * domainEntity: new LawFirmDomainEntityPort()
+	 */
+	domainEntity?: DomainEntityPort;
 }

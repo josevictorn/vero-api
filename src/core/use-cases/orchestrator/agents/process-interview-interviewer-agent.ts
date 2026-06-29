@@ -3,12 +3,14 @@ import { type Either, left, right } from "@/utils/either";
 import { ScreeningFlowNotFoundError } from "./errors/screening-flow-not-found-error";
 import { ScreeningFlowsRepository } from "@/core/repositories/screening-flows-repository";
 import { AiSessionRepository } from "@/core/repositories/ai-session-repository";
+import { LeadsRepository } from "@/core/repositories/leads-repository";
 import type { InterviewerAgent } from "@/core/agents/ports/interviewer-agent.port";
 import type { ChatMemoryPort } from "@/core/agents/ports/chat-memory.port";
 import { AgentResponseError } from "@/core/agents/errors/agent-response-error";
 import type { ChatMessage } from "@/core/agents/types/chat-message";
 import type { CollectedDataItem } from "@/core/agents/types/collected-data-item";
 import type { StatusTransitionMap } from "@/core/orchestrator/session-status-handler";
+import type { DomainEntityPort } from "@/core/ports/domain-entity.port";
 
 interface ProcessInterviewInterviewerAgentRequest {
 	aiSession: AiSession;
@@ -43,10 +45,13 @@ export class ProcessInterviewInterviewerAgentUseCase {
 	constructor(
 		private readonly screeningFlowsRepository: ScreeningFlowsRepository,
 		private readonly aiSessionRepository: AiSessionRepository,
+		private readonly leadsRepository: LeadsRepository,
 		private readonly interviewerAgent: InterviewerAgent,
 		private readonly chatMemoryProvider: ChatMemoryPort,
 		/** Mapa de hooks de transição de status fornecido pela instância. */
 		private readonly onStatusTransition?: StatusTransitionMap,
+		/** Port da entidade de domínio — se configurado, cria a entidade ao concluir a triagem. */
+		private readonly domainEntityPort?: DomainEntityPort,
 	) {}
 
 	async execute({
@@ -106,10 +111,37 @@ export class ProcessInterviewInterviewerAgentUseCase {
 			});
 		}
 
+		// ── Triagem concluída → transição para FORWARDED ──────────────────────────
 		const previousStatus = aiSession.status;
 		aiSession.status = "FORWARDED";
 		await this.aiSessionRepository.save(aiSession);
 
+		// 1) Criar a entidade de domínio via port (não-fatal se falhar)
+		let domainEntityId: string | undefined;
+
+		if (this.domainEntityPort && aiSession.leadId) {
+			const lead = await this.leadsRepository.findById(aiSession.leadId);
+
+			if (lead) {
+				const entityResult = await this.domainEntityPort.createFromScreening({
+					lead,
+					aiSession,
+					collectedData: agentOutput.collectedData,
+					today,
+				});
+
+				if (entityResult.isRight()) {
+					domainEntityId = entityResult.value.entityId;
+				} else {
+					console.error(
+						"[Framework] DomainEntityPort.createFromScreening() falhou:",
+						entityResult.value,
+					);
+				}
+			}
+		}
+
+		// 2) Disparar hook de transição (com domainEntityId no contexto)
 		await this.onStatusTransition?.["FORWARDED"]?.({
 			previousStatus,
 			newStatus: "FORWARDED",
@@ -117,6 +149,7 @@ export class ProcessInterviewInterviewerAgentUseCase {
 			collectedData: agentOutput.collectedData,
 			contactName: agentOutput.contactName,
 			today,
+			domainEntityId,
 		});
 
 		return right({

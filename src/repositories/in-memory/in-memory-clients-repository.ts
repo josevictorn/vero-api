@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Client, Prisma } from "@generated/prisma/client";
 import { ITEM_PER_PAGE } from "@/utils/constants";
 import type { PaginationParams } from "@/utils/pagination-params";
-import { ClientsRepository } from "@/instance/repositories/clients-repository";
+import { ClientsRepository } from "@/instance/ports/clients-repository";
 
 export class InMemoryClientsRepository implements ClientsRepository {
 	private items: Client[] = [];
@@ -22,16 +22,16 @@ export class InMemoryClientsRepository implements ClientsRepository {
 		const client: Client = {
 			id: randomUUID(),
 			name: data.name,
-			maritalStatus: data.maritalStatus,
-			profession: data.profession,
-			rg: data.rg,
-			issuingAgency: data.issuingAgency,
-			cpf: data.cpf,
-			street: data.street,
-			neighborhood: data.neighborhood,
-			city: data.city,
-			state: data.state,
-			zipCode: data.zipCode,
+			maritalStatus: data.maritalStatus ?? null,
+			profession: data.profession ?? null,
+			rg: data.rg ?? null,
+			issuingAgency: data.issuingAgency ?? null,
+			cpf: data.cpf ?? null,
+			street: data.street ?? null,
+			neighborhood: data.neighborhood ?? null,
+			city: data.city ?? null,
+			state: data.state ?? null,
+			zipCode: data.zipCode ?? null,
 			email: data.email,
 			cellphone: data.cellphone,
 			workspaceId: data.workspaceId,
