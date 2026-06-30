@@ -80,10 +80,9 @@ Este diretório contém:
 | `src/instance/agents/case-analyzer/` | `GeminiCaseAnalyzerAgent` + interface + prompt | Agente de análise jurídica — específico do domínio |
 | `src/instance/config/` | `instance-config.ts` com `createLawFirmInstanceConfig()` | Status, handlers e hooks são jurídicos |
 | `src/instance/use-cases/agents/` | `ProcessScreeningAnalyzerAgentUseCase` | Hook pós-triagem específico da advocacia |
-| `src/instance/use-cases/clients/` | CRUD de clientes com lógica jurídica (contratos, petições) | Entidade e lógica exclusivas do domínio |
 | `src/instance/use-cases/lawyers/` | CRUD de advogados | Entidade exclusiva do domínio |
 | `src/instance/use-cases/calendar/` | Integração Google Calendar | Opcional — manter ou remover conforme necessidade |
-| `src/instance/repositories/` | Interfaces de `ClientsRepository`, `LawyersRepository`, etc. | Repositórios de entidades específicas |
+| `src/instance/ports/` | `LawFirmDomainEntityPort`, `ClientsRepository` | Implementação jurídica do `DomainEntityPort` |
 
 ### 3.2 Apagar o diretório `src/http/controllers/`
 
@@ -91,13 +90,14 @@ Este diretório contém:
 rm -rf src/http/controllers/
 ```
 
-Contém controllers HTTP específicos da instância atual:
+Continha controllers HTTP específicos da instância atual:
 
 | Diretório | O que contém |
 |---|---|
 | `src/http/controllers/lawyers/` | Rotas REST dos advogados |
-| `src/http/controllers/clients/` | Rotas REST dos clientes |
 | `src/http/controllers/calendar/` | Rotas de integração Google Calendar |
+
+> **Nota:** As rotas de clientes (`/clients`) foram **substituidas pelas rotas genéricas `/entities`** fornecidas pelo framework. Não é necessário criar controllers de CRUD para a entidade de domínio da nova instância.
 
 ### 3.3 Editar `src/app.ts` — remover imports e registros da instância atual
 
@@ -106,16 +106,14 @@ Abra `src/app.ts` e remova as linhas marcadas:
 ```typescript
 // REMOVER estas linhas de import:
 import { lawyersRoutes } from "@/http/controllers/lawyers/routes";
-import { clientsRoutes } from "@/http/controllers/clients/routes";
 import { calendarRoutes } from "@/http/controllers/calendar/routes";
 
 // REMOVER estes registros:
 app.register(calendarRoutes);
 app.register(lawyersRoutes);
-app.register(clientsRoutes);
 ```
 
-**Manter** todos os imports e registros com o prefixo `@/core/`:
+**Manter** todos os imports e registros com o prefixo `@/core/` e o bloco das rotas genéricas:
 
 ```typescript
 // MANTER — são do framework
@@ -127,6 +125,12 @@ import { leadsRoutes } from "@/core/controllers/leads/routes";
 import { webhooksRoutes } from "@/core/controllers/webhooks/routes";
 import { passwordRoutes } from "@/core/controllers/password/routes";
 import { screeningReportsRoutes } from "@/core/controllers/screening-reports/routes";
+import { domainEntitiesRoutes } from "@/core/controllers/domain-entities/routes";
+
+// MANTER — registra rotas genéricas de entidade de domínio
+if (instanceConfig.domainEntity) {
+  app.register(domainEntitiesRoutes(instanceConfig.domainEntity));
+}
 ```
 
 ### 3.4 Limpar o schema Prisma (opcional — se não for usar entidades jurídicas)
@@ -136,13 +140,10 @@ Abra `prisma/schema.prisma` e remova os models específicos da advocacia que nã
 ```
 # Remover se não forem usados no novo domínio:
 model Lawyer { ... }
-model Client { ... }
+model Client { ... }   ← será substituído pela entidade de domínio da nova instância
 model GoogleCalendarConnection { ... }
 model CalendarEvent { ... }
 model CaseAnalysis { ... }   ← deprecated, pode remover com segurança
-
-# Remover enum se não usar Lawyer:
-# (o enum Role pode ser mantido se quiser controle de acesso por papel)
 ```
 
 **Manter obrigatoriamente** (são do framework):
@@ -202,10 +203,11 @@ mkdir -p src/instance/agents/identifier
 mkdir -p src/instance/agents/interviewer
 mkdir -p src/instance/agents/post-screening    # equivalente ao case-analyzer
 mkdir -p src/instance/config
+mkdir -p src/instance/ports                    # implementação do DomainEntityPort
 mkdir -p src/instance/use-cases/post-screening
-mkdir -p src/instance/repositories
-mkdir -p src/http/controllers/patients         # entidade específica da clínica
 ```
+
+> **Nota:** Não é mais necessário criar `src/http/controllers/patients/` para o CRUD básico da entidade de domínio. O framework fornece as rotas `/entities` automaticamente via `DomainEntityPort`. Crie controllers HTTP apenas para rotas **específicas** que não são cobertas pelo CRUD genérico.
 
 ---
 
@@ -643,7 +645,107 @@ export class ProcessPostScreeningUseCase {
 
 ---
 
-### Passo 6: Criar o `InstanceConfig`
+### Passo 6: Implementar o `DomainEntityPort`
+
+O `DomainEntityPort` é o **ponto variável** que substitui o CRUD manual da entidade de domínio. A instância implementa este port e o framework fornece todas as rotas e use cases automaticamente.
+
+**Arquivo:** `src/instance/ports/clinic-domain-entity.port.ts`
+
+```typescript
+import { left, right } from "@/utils/either";
+import type { Either } from "@/utils/either";
+import type {
+  DomainEntityPort,
+  DomainEntity,
+  DomainEntityResult,
+  CreateFromScreeningInput,
+} from "@/core/ports/domain-entity.port";
+import type { PaginationParams } from "@/utils/pagination-params";
+import type { PaginatedResult } from "@/utils/paginated-results";
+import { PrismaPatientsRepository } from "@/instance/repositories/prisma-patients-repository";
+
+export class ClinicDomainEntityPort implements DomainEntityPort {
+  /** Tag usada para agrupar as rotas /entities no Swagger. */
+  readonly entityTag = "patients";
+
+  constructor(
+    private readonly patientsRepository = new PrismaPatientsRepository(),
+  ) {}
+
+  // Chamado automaticamente pelo framework ao concluir a triagem
+  async createFromScreening(
+    input: CreateFromScreeningInput,
+  ): Promise<Either<Error, DomainEntityResult>> {
+    const { lead } = input;
+
+    // Idempotente — retorna o existente se já foi criado
+    const existing = await this.patientsRepository.findByLeadId(lead.id);
+    if (existing) {
+      return right({ entityId: existing.id, entityType: "patient", entity: existing });
+    }
+
+    // Cria com dados do Lead — campos específicos (plano de saúde, etc.)
+    // são opcionais e preenchidos depois via PUT /entities/:id
+    const patient = await this.patientsRepository.create({
+      name: lead.name,
+      email: lead.email ?? "",
+      phone: lead.cellphone,
+      workspaceId: lead.workspaceId,
+      leadId: lead.id,
+    });
+
+    return right({ entityId: patient.id, entityType: "patient", entity: patient });
+  }
+
+  async findById(id: string): Promise<DomainEntity | null> {
+    return this.patientsRepository.findById(id);
+  }
+
+  async findByLeadId(leadId: string): Promise<DomainEntity | null> {
+    return this.patientsRepository.findByLeadId(leadId);
+  }
+
+  async findMany(params: PaginationParams): Promise<PaginatedResult<DomainEntity>> {
+    return this.patientsRepository.findMany(params);
+  }
+
+  async update(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<Either<Error, DomainEntityResult>> {
+    const patient = await this.patientsRepository.findById(id);
+    if (!patient) return left(new Error(`Patient "${id}" not found.`));
+
+    const updated = await this.patientsRepository.save({
+      ...patient,
+      ...(data as Partial<typeof patient>),
+      id: patient.id,
+      workspaceId: patient.workspaceId,
+      createdAt: patient.createdAt,
+    });
+
+    return right({ entityId: updated.id, entityType: "patient", entity: updated });
+  }
+
+  async delete(id: string): Promise<void> {
+    return this.patientsRepository.delete(id);
+  }
+}
+```
+
+**Rotas geradas automaticamente pelo framework (sem nenhum código adicional):**
+
+| Rota | Descrição | Tag no Swagger |
+|------|-----------|----------------|
+| `GET /entities` | Lista paginada de pacientes | `patients` |
+| `GET /entities/lead/:leadId` | Paciente por Lead ID | `patients` |
+| `GET /entities/:id` | Paciente por ID | `patients` |
+| `PUT /entities/:id` | Atualiza paciente (body livre) | `patients` |
+| `DELETE /entities/:id` | Remove paciente | `patients` |
+
+---
+
+### Passo 7: Criar o `InstanceConfig`
 
 **Arquivo:** `src/instance/config/instance-config.ts`
 
@@ -749,6 +851,13 @@ export function createClinicInstanceConfig(): InstanceConfig {
       // [CLINIC_STATUS.INTERVIEWING]: async (ctx) => notificationService.alertTeam(ctx),
       // [CLINIC_STATUS.SCHEDULED]: async (ctx) => calendarService.createEvent(ctx),
     },
+
+    /**
+     * Entidade de domínio desta instância: Patient (paciente da clínica).
+     * O framework criará o paciente automaticamente ao concluir a triagem
+     * e fornecerá CRUD completo via rotas genéricas /entities.
+     */
+    domainEntity: new ClinicDomainEntityPort(),
   };
 
   return config;
@@ -781,11 +890,9 @@ const routeMessageUseCase = makeRouteMessageUseCase(clinicInstanceConfig);
 
 ---
 
-### Passo 8: Criar Entidades Específicas do Domínio (se necessário)
+### Passo 8: Adicionar Entidades Específicas ao Schema
 
-Se o seu domínio precisar de entidades além das que o framework já fornece (User, Workspace, Lead, ScreeningFlow, AiSession, ScreeningReport), crie-as na instância.
-
-**Exemplo: modelo `Patient` para a clínica**
+A entidade de domínio (ex: `Patient`) precisa existir no schema Prisma para que o port possa persistí-la.
 
 Adicione ao `prisma/schema.prisma`:
 
@@ -793,9 +900,9 @@ Adicione ao `prisma/schema.prisma`:
 model Patient {
   id          String   @id @default(uuid())
   name        String
-  cpf         String
-  dateOfBirth DateTime @map("date_of_birth")
+  email       String
   phone       String
+  dateOfBirth DateTime? @map("date_of_birth")
   healthPlan  String?  @map("health_plan")
   workspaceId String   @map("workspace_id")
   leadId      String?  @unique @map("lead_id")
@@ -824,24 +931,10 @@ pnpm prisma migrate dev --name add_patient_model
 pnpm prisma generate
 ```
 
-Crie a interface do repositório em `src/instance/repositories/patients-repository.ts`:
+Crie o repositório Prisma em `src/instance/repositories/prisma-patients-repository.ts` com os métodos:
+`findById`, `findByLeadId`, `create`, `findMany`, `save`, `delete`.
 
-```typescript
-import type { Patient, Prisma } from "@generated/prisma/client";
-import type { PaginatedResult } from "@/utils/paginated-results";
-import type { PaginationParams } from "@/utils/pagination-params";
-
-export interface PatientsRepository {
-  create(data: Prisma.PatientUncheckedCreateInput): Promise<Patient>;
-  delete(id: string): Promise<void>;
-  findById(id: string): Promise<Patient | null>;
-  findByLeadId(leadId: string): Promise<Patient | null>;
-  findMany(params: PaginationParams): Promise<PaginatedResult<Patient>>;
-  save(patient: Patient): Promise<Patient>;
-}
-```
-
-E a implementação Prisma em `src/core/repositories/prisma/prisma-patients-repository.ts`.
+> **Não é necessário** criar interface separada para o repositório da entidade de domínio — o `DomainEntityPort` encapsula essa dependência internamente.
 
 ---
 
@@ -874,16 +967,25 @@ data: {
 
 ## 7. Registrar as Rotas da Instância no App
 
-Se criou entidades específicas com controllers REST, registre em `src/app.ts`:
+As rotas genéricas de entidade de domínio (`/entities`) são registradas automaticamente em `src/app.ts` a partir do `DomainEntityPort`:
 
 ```typescript
 // src/app.ts
+import { domainEntitiesRoutes } from "@/core/controllers/domain-entities/routes";
+import { clinicInstanceConfig } from "@instance/config/instance-config";
 
-// Adicionar imports das rotas da nova instância:
-import { patientsRoutes } from "@/http/controllers/patients/routes";
+// Rotas genéricas de entidade de domínio (CRUD via DomainEntityPort da instância)
+if (clinicInstanceConfig.domainEntity) {
+  app.register(domainEntitiesRoutes(clinicInstanceConfig.domainEntity));
+}
+```
 
-// Adicionar registro:
-app.register(patientsRoutes);
+Se criou controllers REST adicionais para lógica específica (ex: gerar relatórios, agendar consultas), adicione-os também:
+
+```typescript
+// Adicionar apenas rotas que vão ALÉM do CRUD genérico
+import { appointmentsRoutes } from "@/http/controllers/appointments/routes";
+app.register(appointmentsRoutes);
 ```
 
 ---
@@ -941,13 +1043,19 @@ Antes de rodar a nova instância, confirme cada item:
 - [ ] `InterviewerAgent` implementado (`gemini-interviewer-agent.ts` + `interviewer-prompt.ts`)
 - [ ] Agente pós-triagem implementado (equivalente ao `case-analyzer`)
 - [ ] Hook pós-triagem implementado (`ProcessPostScreeningUseCase`)
+- [ ] **`DomainEntityPort` implementado** em `src/instance/ports/`
+  - [ ] `entityTag` definido (ex: `"patients"`)
+  - [ ] `createFromScreening()` implementado (idempotente)
+  - [ ] Repositório Prisma criado
 - [ ] `InstanceConfig` criado em `src/instance/config/instance-config.ts`
   - [ ] `workspaceLabel` definido
   - [ ] `agents.identifier` e `agents.interviewer` configurados
   - [ ] `terminalStatuses` definido
   - [ ] Todos os status têm um handler em `statusHandlers`
   - [ ] `onStatusTransition["FORWARDED"]` registrado
+  - [ ] `domainEntity` registrado com a implementação do port
 - [ ] Import no `evolution.ts` atualizado para usar o novo config singleton
+- [ ] `app.ts` atualizado com `domainEntitiesRoutes(instanceConfig.domainEntity)`
 
 ### Banco de dados
 - [ ] Entidades específicas do domínio adicionadas ao schema (se necessário)
@@ -963,7 +1071,10 @@ Antes de rodar a nova instância, confirme cada item:
 - [ ] Após identificação, a sessão muda para `INTERVIEWING`
 - [ ] O agente entrevistador conduz as perguntas do `ScreeningFlow`
 - [ ] Ao concluir a triagem, a sessão muda para `FORWARDED`
+- [ ] A entidade de domínio é criada automaticamente no banco (`/entities/lead/:leadId` retorna o registro)
 - [ ] O `ScreeningReport` é criado no banco com os dados do domínio
+- [ ] `GET /entities` retorna a lista paginada
+- [ ] `PUT /entities/:id` atualiza campos da entidade
 
 ---
 
@@ -974,10 +1085,12 @@ src/
 ├── core/                          ← FRAMEWORK — nunca altere
 │   ├── agents/ports/              ← Contratos (interfaces) dos agentes
 │   ├── config/                    ← Contrato InstanceConfig
-│   ├── controllers/               ← Controllers HTTP do core (webhook incluso)
+│   ├── controllers/               ← Controllers HTTP do core (webhook + /entities)
 │   ├── orchestrator/              ← Tipos StatusHandler, StatusTransition*
+│   ├── ports/                     ← DomainEntityPort (contrato)
 │   ├── repositories/              ← Interfaces de repositório do core
 │   └── use-cases/                 ← Todos os use cases do framework
+│       └── domain-entity/         ← CRUD genérico (GetDomainEntity, FetchDomainEntities, ...)
 │
 ├── instance/                      ← SUA INSTÂNCIA — crie e adapte aqui
 │   ├── agents/
@@ -986,12 +1099,15 @@ src/
 │   │   └── post-screening/        ← Agente de pós-triagem (opcional)
 │   ├── config/
 │   │   └── instance-config.ts     ← InstanceConfig da sua instância
-│   ├── repositories/              ← Interfaces de repositórios da instância
+│   ├── ports/
+│   │   └── clinic-domain-entity.port.ts  ← Implementação do DomainEntityPort
+│   ├── repositories/              ← Repositórios Prisma da instância
 │   └── use-cases/
 │       └── post-screening/        ← Hook pós-triagem (onStatusTransition)
 │
-├── http/controllers/              ← Controllers REST da instância (opcional)
-│   └── patients/                  ← Exemplo: rotas de pacientes
+├── http/controllers/              ← Controllers REST adicionais (opcional)
+│   └── appointments/              ← Exemplo: rotas de agendamento
+│                                    (não crie para CRUD básico — use /entities)
 │
-└── app.ts                         ← Registrar rotas da instância aqui
+└── app.ts                         ← Registrar rotas da instância + domainEntitiesRoutes
 ```

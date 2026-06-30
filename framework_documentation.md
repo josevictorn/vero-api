@@ -91,7 +91,9 @@ Define o **fluxo fixo da fase de entrevista**:
 3. Recupera o histórico de chat (chave: `{chatId}-entrevista`).
 4. Chama `InterviewerAgent.interview()` com perguntas, dados coletados, data atual e histórico.
 5. Salva histórico e dados coletados atualizados.
-6. Se triagem concluída: atualiza status para `"FORWARDED"`, persiste e dispara `onStatusTransition["FORWARDED"]`.
+6. Se triagem concluída: atualiza status para `"FORWARDED"`, persiste e:
+   - **Chama `DomainEntityPort.createFromScreening()`** automaticamente (se o port estiver configurado na instância), criando a entidade de domínio a partir dos dados do Lead e da triagem.
+   - Dispara `onStatusTransition["FORWARDED"]` com `domainEntityId` no contexto.
 
 ---
 
@@ -175,6 +177,19 @@ O framework fornece use cases completos de CRUD para todos os seus agregados cor
 | `GetScreeningReportUseCase` | `ScreeningReportRepository` | Busca por ID |
 
 > **Observação sobre `ScreeningReport`:** O campo `data: Json` é intencionalmente genérico. A instância persiste nele a estrutura de dados que fizer sentido para o domínio — análise jurídica, ficha médica, orçamento, etc.
+
+#### 2.3.7 Use Cases de `DomainEntity` (Entidade de Domínio)
+
+**Diretório:** `src/core/use-cases/domain-entity/`
+
+Use cases genéricos que delegam ao `DomainEntityPort` configurado pela instância. A instância **não precisa escrever** esses use cases — o framework os fornece.
+
+| Use Case | O que faz |
+|----------|-----------|
+| `GetDomainEntityUseCase` | Busca entidade por ID; retorna `DomainEntityNotFoundError` se ausente |
+| `FetchDomainEntitiesUseCase` | Lista paginada de entidades; retorna `InvalidPageError` se `page < 1` |
+| `UpdateDomainEntityUseCase` | Atualiza entidade com body livre; delega validação ao port da instância |
+| `DeleteDomainEntityUseCase` | Verifica existência e deleta via port |
 
 ---
 
@@ -450,6 +465,7 @@ onStatusTransition?: StatusTransitionMap
 | `contactName` | `string?` | `INTERVIEWING`, `FORWARDED` | Nome do contato identificado |
 | `collectedData` | `CollectedDataItem[]?` | `FORWARDED` | Dados coletados na triagem |
 | `today` | `string?` | `FORWARDED` | Data atual formatada |
+| `domainEntityId` | `string?` | `FORWARDED` | ID da entidade de domínio criada pelo `DomainEntityPort` (disponível quando `InstanceConfig.domainEntity` está configurado) |
 
 **Exemplo na instância jurídica:**
 ```typescript
@@ -471,6 +487,105 @@ onStatusTransition: {
 - Invocado via `optional chaining`: `await this.onStatusTransition?.["STATUS"]?.(ctx)` — ausência do mapa ou do hook nunca causa erro.
 - É `await`ado antes de retornar a resposta ao contato — erros no hook devem ser tratados internamente.
 - Erros no hook são **não-fatais** para o framework (a transição já foi persistida).
+
+---
+
+### 3.6 `domainEntity` — Entidade Primária de Domínio
+
+```typescript
+domainEntity?: DomainEntityPort
+```
+
+**O que é:** Port opcional que a instância implementa para gerenciar sua **entidade primária de domínio** — a entidade central do negócio que é criada ao final de cada triagem bem-sucedida.
+
+**Exemplos por domínio:**
+
+| Domínio | Entidade | `entityTag` |
+|---------|----------|-------------|
+| Escritório de advocacia | `Client` | `"clients"` |
+| Clínica médica | `Patient` | `"patients"` |
+| Construtora | `Contractor` | `"contractors"` |
+
+**Para que serve:** Quando configurado, o framework:
+1. **Cria a entidade automaticamente** ao concluir a triagem (transição para `FORWARDED`), chamando `port.createFromScreening()` com os dados do Lead e da sessão.
+2. **Fornece CRUD completo** via rotas genéricas `/entities` — a instância não precisa escrever controllers nem use cases para o CRUD da entidade de domínio.
+
+**Contrato completo:**
+
+```typescript
+interface DomainEntityPort {
+  /** Tag para agrupar as rotas /entities no Swagger (ex: "clients", "patients"). */
+  readonly entityTag: string;
+
+  /** Cria a entidade a partir dos dados da triagem. Deve ser idempotente. */
+  createFromScreening(input: CreateFromScreeningInput): Promise<Either<Error, DomainEntityResult>>;
+
+  findById(id: string): Promise<DomainEntity | null>;
+  findByLeadId(leadId: string): Promise<DomainEntity | null>;
+  findMany(params: PaginationParams): Promise<PaginatedResult<DomainEntity>>;
+
+  /** Body livre — a instância valida e aplica os campos que reconhece. */
+  update(id: string, data: Record<string, unknown>): Promise<Either<Error, DomainEntityResult>>;
+  delete(id: string): Promise<void>;
+}
+```
+
+**Rotas geradas automaticamente pelo framework:**
+
+| Rota | Descrição |
+|------|-----------|
+| `GET /entities` | Lista paginada de entidades |
+| `GET /entities/lead/:leadId` | Entidade associada a um Lead |
+| `GET /entities/:id` | Entidade por ID |
+| `PUT /entities/:id` | Atualização (body livre) |
+| `DELETE /entities/:id` | Remoção |
+
+Todas as rotas são **agrupadas no Swagger** pela tag definida em `entityTag`.
+
+**Implementação na instância de advocacia:**
+
+```typescript
+export class LawFirmDomainEntityPort implements DomainEntityPort {
+  readonly entityTag = "clients";
+
+  async createFromScreening(input) {
+    // Verifica idempotência
+    const existing = await this.clientsRepository.findByLeadId(input.lead.id);
+    if (existing) return right({ entityId: existing.id, entityType: "client", entity: existing });
+
+    // Cria Client com os dados do Lead — campos complementares são null
+    // e preenchidos posteriormente pelo advogado via PUT /entities/:id
+    const client = await this.clientsRepository.create({
+      name: input.lead.name,
+      email: input.lead.email ?? "",
+      cellphone: input.lead.cellphone,
+      workspaceId: input.lead.workspaceId,
+      createdFromLeadId: input.lead.id,
+    });
+    return right({ entityId: client.id, entityType: "client", entity: client });
+  }
+
+  // findById, findByLeadId, findMany, update, delete → delegam ao PrismaClientsRepository
+}
+```
+
+**Registro na instância:**
+
+```typescript
+// src/instance/config/instance-config.ts
+domainEntity: new LawFirmDomainEntityPort(),
+```
+
+**Registro das rotas em `app.ts`:**
+
+```typescript
+import { domainEntitiesRoutes } from "@/core/controllers/domain-entities/routes";
+import { lawFirmInstanceConfig } from "@instance/config/instance-config";
+
+if (lawFirmInstanceConfig.domainEntity) {
+  app.register(domainEntitiesRoutes(lawFirmInstanceConfig.domainEntity));
+}
+```
 
 ---
 
@@ -598,6 +713,15 @@ await this.onStatusTransition?.["INTERVIEWING"]?.({
 
 // process-interview-interviewer-agent.ts
 // Após persistir a transição para FORWARDED:
+// 1) Chama createFromScreening() se o port estiver configurado
+if (this.domainEntityPort && aiSession.leadId) {
+  const entityResult = await this.domainEntityPort.createFromScreening({
+    lead, aiSession, collectedData: agentOutput.collectedData, today,
+  });
+  if (entityResult.isRight()) domainEntityId = entityResult.value.entityId;
+}
+
+// 2) Dispara o hook com domainEntityId no contexto
 await this.onStatusTransition?.["FORWARDED"]?.({
   previousStatus,
   newStatus: "FORWARDED",
@@ -605,6 +729,7 @@ await this.onStatusTransition?.["FORWARDED"]?.({
   collectedData: agentOutput.collectedData, // ← disponível após triagem
   contactName: agentOutput.contactName,
   today,                                     // ← passado pelo handler da instância
+  domainEntityId,                            // ← ID da entidade criada (ou undefined)
 });
 ```
 
@@ -667,6 +792,7 @@ classDiagram
         +terminalStatuses: string[]
         +statusHandlers: StatusHandlerMap
         +onStatusTransition?: StatusTransitionMap
+        +domainEntity?: DomainEntityPort
     }
 
     class AgentsConfig {
@@ -736,6 +862,7 @@ classDiagram
         +collectedData?: CollectedDataItem[]
         +contactName?: string
         +today?: string
+        +domainEntityId?: string
     }
 
     InstanceConfig --> AgentsConfig : agents
@@ -785,9 +912,11 @@ classDiagram
     class ProcessInterviewInterviewerAgentUseCase {
         -screeningFlowsRepository: ScreeningFlowsRepository
         -aiSessionRepository: AiSessionRepository
+        -leadsRepository: LeadsRepository
         -interviewerAgent: InterviewerAgent
         -chatMemoryProvider: ChatMemoryPort
         -onStatusTransition?: StatusTransitionMap
+        -domainEntityPort?: DomainEntityPort
         +execute(request) Promise~Either~
     }
 
@@ -1037,6 +1166,7 @@ classDiagram
         +terminalStatuses: string[]
         +statusHandlers: StatusHandlerMap
         +onStatusTransition?: StatusTransitionMap
+        +domainEntity?: DomainEntityPort
     }
 
     %% ── INTERFACES DOS AGENTES (contratos variáveis) ──
@@ -1073,6 +1203,21 @@ classDiagram
         -model: "gemini-3-flash-preview"
         +interview(input) Promise~Either~
     }
+    class DomainEntityPort {
+        <<interface — ponto variável>>
+        +entityTag: string
+        +createFromScreening(input) Promise~Either~
+        +findById(id) Promise~DomainEntity?~
+        +findByLeadId(leadId) Promise~DomainEntity?~
+        +findMany(params) Promise~PaginatedResult~
+        +update(id, data) Promise~Either~
+        +delete(id) Promise~void~
+    }
+    class LawFirmDomainEntityPort {
+        <<instância concreta>>
+        +entityTag: "clients"
+        +createFromScreening(input) Promise~Either~
+    }
     class RedisChatMemoryProvider {
         <<infraestrutura concreta>>
         +getHistory(key) Promise~ChatMessage[]~
@@ -1101,6 +1246,7 @@ classDiagram
     InterviewerAgent <|.. GeminiInterviewerAgent
     ChatMemoryPort <|.. RedisChatMemoryProvider
     ChatMemoryPort <|.. InMemoryChatMemoryProvider
+    DomainEntityPort <|.. LawFirmDomainEntityPort
 
     EvolutionWebhookController --> HandleIncomingMessageUseCase : cria via factory
     EvolutionWebhookController --> RouteMessageUseCase : cria via factory
