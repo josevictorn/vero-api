@@ -11,7 +11,7 @@ import { buildCaseAnalyzerSystemPrompt } from "./case-analyzer-prompt";
 import { AgentResponseError } from "@/providers/agents/errors/agent-response-error";
 
 const AGENT_NAME = "caseAnalyzer";
-const MODEL = "gemini-3-flash-preview";
+const MODEL = "gemini-3.1-flash-lite";
 
 const caseAnalyzerResponseSchema = z.object({
 	title: z.string(),

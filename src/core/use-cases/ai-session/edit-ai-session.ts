@@ -14,6 +14,7 @@ interface EditAiSessionUseCaseRequest {
 	name?: string;
 	screeningFlowId?: string | null;
 	status?: string;
+	leadId?: string | null;
 }
 
 type EditAiSessionUseCaseResponse = Either<
@@ -36,6 +37,7 @@ export class EditAiSessionUseCase {
 		name,
 		cellphone,
 		isThirdParty,
+		leadId,
 	}: EditAiSessionUseCaseRequest): Promise<EditAiSessionUseCaseResponse> {
 		const aiSession = await this.aiSessionRepository.findById(aiSessionId);
 
@@ -62,6 +64,7 @@ export class EditAiSessionUseCase {
 		aiSession.name = name ?? aiSession.name;
 		aiSession.cellphone = cellphone ?? aiSession.cellphone;
 		aiSession.isThirdParty = isThirdParty ?? aiSession.isThirdParty;
+		aiSession.leadId = leadId !== undefined ? leadId : aiSession.leadId;
 
 		const updatedAiSession = await this.aiSessionRepository.save(aiSession);
 

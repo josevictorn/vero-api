@@ -121,7 +121,6 @@ export class ProcessInterviewInterviewerAgentUseCase {
 
 		if (this.domainEntityPort && aiSession.leadId) {
 			const lead = await this.leadsRepository.findById(aiSession.leadId);
-
 			if (lead) {
 				const entityResult = await this.domainEntityPort.createFromScreening({
 					lead,

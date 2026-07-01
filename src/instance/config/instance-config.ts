@@ -42,24 +42,30 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 		terminalStatuses: [LAW_FIRM_STATUS.BOOKED],
 	} satisfies Omit<InstanceConfig, "statusHandlers" | "onStatusTransition" | "domainEntity">;
 
-	// Monta os use cases do core passando a config (sem os handlers ainda)
+	const config: Omit<InstanceConfig, "statusHandlers"> = {
+		...baseConfig,
+		onStatusTransition: {
+			/** Quando a triagem é concluída e o caso é encaminhado, gera a análise jurídica. */
+			[LAW_FIRM_STATUS.FORWARDED]: async (ctx) => analyzerUseCase.execute(ctx),
+		},
+		/**
+		 * Entidade de domínio desta instância: Client (cliente do escritório).
+		 * Criado automaticamente pelo framework ao concluir a triagem.
+		 * CRUD completo disponível via rotas genéricas /entities do framework.
+		 */
+		domainEntity: new LawFirmDomainEntityPort(),
+	};
+
+	// Monta os use cases do core passando a config COMPLETA (incluindo os hooks)
 	const identifyingUseCase = makeProcessMessageIdentifyingAgentUseCase(
-		baseConfig as InstanceConfig,
+		config as InstanceConfig,
 	);
 	const interviewingUseCase = makeProcessInterviewInterviewerAgentUseCase(
-		baseConfig as InstanceConfig,
+		config as InstanceConfig,
 	);
 
-	const today = () =>
-		new Date().toLocaleDateString("pt-BR", {
-			weekday: "long",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
-		});
-
-	const config: InstanceConfig = {
-		...baseConfig,
+	const fullConfig: InstanceConfig = {
+		...config,
 		statusHandlers: {
 			/** Identifica o lead e a categoria do caso */
 			[LAW_FIRM_STATUS.IDENTIFYING]: async (session, message, ctx) => {
@@ -73,10 +79,16 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 
 			/** Realiza a entrevista de triagem */
 			[LAW_FIRM_STATUS.INTERVIEWING]: async (session, message, ctx) => {
+				const today = new Date().toLocaleDateString("pt-BR", {
+					weekday: "long",
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				});
 				const result = await interviewingUseCase.execute({
 					aiSession: session,
 					messageText: message,
-					today: today(),
+					today,
 				});
 				if (result.isLeft()) return left(result.value);
 				return right({ reply: result.value.messageToClient });
@@ -91,23 +103,9 @@ export function createLawFirmInstanceConfig(): InstanceConfig {
 			/** Já agendado — silencioso (nova mensagem reiniciará a sessão) */
 			[LAW_FIRM_STATUS.BOOKED]: async () => right({ reply: "" }),
 		},
-		/**
-		 * Hooks de transição de status específicos do domínio jurídico.
-		 * Executados pelo core imediatamente após cada mudança de status ser persistida.
-		 */
-		onStatusTransition: {
-			/** Quando a triagem é concluída e o caso é encaminhado, gera a análise jurídica. */
-			[LAW_FIRM_STATUS.FORWARDED]: async (ctx) => analyzerUseCase.execute(ctx),
-		},
-		/**
-		 * Entidade de domínio desta instância: Client (cliente do escritório).
-		 * Criado automaticamente pelo framework ao concluir a triagem.
-		 * CRUD completo disponível via rotas genéricas /entities do framework.
-		 */
-		domainEntity: new LawFirmDomainEntityPort(),
 	};
 
-	return config;
+	return fullConfig;
 }
 
 /** Singleton da configuração — use este export nos controllers/webhooks */

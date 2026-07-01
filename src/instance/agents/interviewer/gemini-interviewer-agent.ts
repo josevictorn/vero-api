@@ -12,7 +12,7 @@ import type { ChatMessage } from "@core/agents/types/chat-message";
 import { AgentResponseError } from "@core/agents/errors/agent-response-error";
 
 const AGENT_NAME = "interviewer";
-const MODEL = "gemini-3-flash-preview";
+const MODEL = "gemini-3.1-flash-lite";
 
 const interviewerResponseSchema = z.object({
 	contactName: z.string(),
